@@ -1,0 +1,15 @@
+[package]
+name = "j"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "j"
+path = "src/j.rs"
+
+[[bin]]
+name = "j"
+path = "src/x.rs"
+
+[dependencies]
+anyhow = "*"
