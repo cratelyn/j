@@ -72,7 +72,9 @@ use super::*; use std::marker::PhantomData as PD;
     pub fn get(&self,i:U,j:U)->R<I>{Ok(unsafe{self.ptr_at(i,j)?.read()})}
     pub fn get_uc(&self,i:U,j:U)->R<I>{Ok(unsafe{self.ptr_at_uc(i,j)?.read()})}
     /// returns an iterator whose elements are tuples (i,j) across the array's positions.
-    pub fn iter(&self)->impl IT<Item=(U,U)>{let A{m,n,..}=*self;(1..=m).flat_map(move|i|(1..=n).map(move|j|(i,j)))}}
+    pub fn iter(&self)->impl IT<Item=(U,U)>{let A{m,n,..}=*self;(1..=m).flat_map(move|i|(1..=n).map(move|j|(i,j)))}
+    pub fn vals<'a>(&'a self)->impl IT<Item=I> + 'a{let A{m,n,..}=*self;
+      (1..=m).flat_map(move|i|(1..=n).map(move|j|self.get_uc(i,j).expect("reads work")))}}
   impl<X:MX> A<X>{
     /// sets the value at the given position.
     pub fn set(&mut self,i:U,j:U,v:I)->R<()>{unsafe{self.ptr_at(i,j)?.write(v);}Ok(())}
@@ -151,6 +153,18 @@ use super::*; use std::marker::PhantomData as PD;
       {let(f)=|i,j|{let(x)=l.get(i,j)?;let(y)=r.get(j,i)?;Ok(f(x,y))};r!(A::new(ml,nl)?.init_with(f))}
     bail!("length error");
   }
+}
+
+/**adverbs*/mod adverbs{use super::*;
+  // TODO: define shared "function" definition for plus, mult
+  // TODO: implement "fold" logic for the "over" operator
+  impl Y{
+    pub fn apply(&self,v:D,o:A)->R<A>{use Y::*;
+      match(self){Over=>Y::over(v,o),Scan=>todo!("Y::apply::Scan")}}
+    fn over(v:D,o:A)->R<A>{let(i)=o.vals().fold(0,|x,y|x+y);A::from_i(i)}
+    fn scan(v:D,o:A){}
+  }
+  impl A{}
 }
 
 /**deep-copy*/impl A<MI>{

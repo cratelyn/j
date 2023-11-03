@@ -59,4 +59,15 @@
   #[test]fn display_scalar()->R<()>{let(a)=A::from_i(666)?;eq!(a.to_string(),"666\n");ok!()}
   #[test]fn display_slice()->R<()>{let a:&[I]=&[7,8,9];let a=A::try_from(a)?;eq!(a.to_string(),"7 8 9\n");ok!()}
   #[test]fn display_matrix()->R<()>{let(a)=eval_s("i. 3 3")?;eq!(a.to_string(),"0 1 2\n3 4 5\n6 7 8\n");ok!()}
+} #[cfg(test)]mod adverb{use super::*;
+  #[test]fn sum_one_number()->R<()>{let(a)=eval_s("+ / 1")?;let(i)=a.as_i()?;eq!(i,1);ok!()}
+  #[test]fn sum_two_numbers()->R<()>{let(a)=eval_s("+ / 1 8")?;let(i)=a.as_i()?;eq!(i,9);ok!()}
+  #[ignore] #[test]fn sum_a_sequence()->R<()>{let(a)=eval_s("+ / i. 4")?;let(i)=a.as_i()?;eq!(i,6);ok!()} // XXX TODO: i. off by one for slices
+  #[ignore] #[test]fn product_of_one_to_four()->R<()>{let(a)=eval_s("* / 1 + i. 4")?;let(i)=a.as_i()?;eq!(i,24);ok!()}
+  #[ignore] #[test]fn scan_of_sum()->R<()>{let(a)=eval_s("+ \\ 1 + i. 5")?;eq!(a.m,5);eq!(a.n,5);
+    eq!(a.into_matrix()?,&[&[1, 0, 0, 0, 0],
+                           &[1, 2, 0, 0, 0],
+                           &[1, 2, 3, 0, 0],
+                           &[1, 2, 3, 4, 0],
+                           &[1, 2, 3, 4, 5]]);ok!()}
 }

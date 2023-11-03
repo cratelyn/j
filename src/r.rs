@@ -6,13 +6,16 @@
     #[test]fn lex_single_scalar()->R<()>{let ts=lex("1")?;eq!(ts.as_ref(),[T::I(1)]);ok!()}
     #[test]fn lex_1x3()->R<()>{let ts=lex("1 2 3")?;eq!(ts.as_ref(),[T::I(1),T::I(2),T::I(3)]);ok!()}
     #[test]fn lex_1plus2()->R<()>{let ts=lex("1 + 2")?;eq!(ts.as_ref(),[T::I(1),T::V(S::from("+")),T::I(2)]);ok!()}
+    #[test]fn lex_sum_over()->R<()>{let ts=lex("+ / 1 2")?;eq!(ts.as_ref(),[T::V(S::from("+")),T::V(S::from("/")),T::I(1),T::I(2)]);ok!()}
   }
-}/**input parsing*/pub(crate) use parse::{D,M,N,parse};mod parse{use {crate::*,super::lex::{T,lex}};
+}/**input parsing*/pub(crate) use parse::{D,M,Y,N,parse};mod parse{use {crate::*,super::lex::{T,lex}};
   /**dyadic verb       */ #[derive(DBG,PE,PO)] pub enum D {Plus,Mul}
   /**monadic verb      */ #[derive(DBG,PE,PO)] pub enum M {Idot,Shape,Tally,Transpose}
+  /**adverb            */ #[derive(DBG      )] pub enum Y {Over,Scan}
   /**ast node          */                      pub enum N {/**array literal*/    A{a:A},
                                                            /**dyadic verb*/      D{d:D,l:B<N>,r:B<N>},
                                                            /**monadic verb*/     M{m:M,o:B<N>},
+                                                           /**adverb*/           Y{y:Y,v:D,o:B<N>},
                                                            /**symbol*/           S{sy:SY},
                                                            /**symbol assignment*/V{sy:SY,e:B<N>}}
   /**read array values from token stream; continue until verb or symbol is found, or stream is empty.*/
@@ -24,6 +27,9 @@
          if let Some(m)=M::new(&v){let(o)=ctx.pop().ok_or(err!("no operand {m:?}"))?;ctx.push(b!(N::M{m,o}))}
     else if let Some(d)=D::new(&v){let(r)=ctx.pop().ok_or(err!("no rhs {d:?}"))?;parse_(ts,ctx)?;
       let(l)=ctx.pop().ok_or(err!("no lhs"))?;ctx.push(b!(N::D{d,l,r}))}
+    else if let Some(y)=Y::new(&v){let(o)=ctx.pop().ok_or(err!("no operand {y:?}"))?;
+      let(v)=ts.pop().and_then(|t|match(&t){T::V(d)=>D::new(d),_=>None}).ok_or(err!("no verb to apply"))?;
+      ctx.push(b!(N::Y{y,v,o}))}
     else if v == "=:" {let(e)=ctx.pop().ok_or(err!("assignment requires an expression"))?;
         let(sy)=match(ts.pop()){Some(T::V(sy))=>sy,_=>bail!("assignment must be bound to a variable")}.parse::<SY>()?;
         ctx.push(b!(N::V{sy,e}));}
@@ -35,6 +41,7 @@
     debug_assert!(ts.is_empty());debug_assert_eq!(ctx.len(),1);Ok(ctx.pop())}
   impl M{fn new(s:&str)->O<M>{use M::*;Some(match s{"i."=>Idot,"$"=>Shape,"#"=>Tally,"|:"=>Transpose,_=>r!(None)})}}
   impl D{fn new(s:&str)->O<D>{use D::*;Some(match s{"+"=>Plus,"*"=>Mul,_=>r!(None)})}}
+  impl Y{fn new(s:&str)->O<Y>{use Y::*;Some(match s{"/"=>Over,"\\"=>Scan,_=>r!(None)})}}
   #[cfg(test)]mod t{use super::*;
     macro_rules! t{($f:ident,$i:literal)=>{#[test]fn $f()->R<()>{let ast=parse($i)?;ok!()}}}
     macro_rules! tf{($f:ident,$i:literal)=>{#[test] #[should_panic]fn $f(){parse($i).unwrap();}}}
@@ -48,5 +55,8 @@
     tf!(parse_symbol_times_symbol_numbers,"a * b 1"); tf!(parse_tally_tally_symbol_symbol,"# # a b");
     t!(assign_symbol_scalar,"a =: 1"); t!(assign_symbol_slice,"a =: 1 2 3"); t!(assign_symbol_idot,"a =: i. 2 3");
     t!(assign_symbol_slice_plus_slice,"a =: 1 2 3 + 1 2 3");
+    t!(parse_add_over_sequence,"+ / i. 3 3"); t!(parse_add_scan_sequence,"+ / i. 3 3");
+    tf!(parse_no_verb_over_sequence_fails,"/ i. 3 3"); tf!(parse_no_verb_scan_sequence_fails,"/ i. 3 3");
+    tf!(parse_add_over_no_sequence_fails,"+ /"); tf!(parse_add_scan_no_sequence_fails,"+ /");
   }
 }
