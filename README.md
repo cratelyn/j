@@ -366,7 +366,7 @@ but a language like Cantonese might include novel concepts such as semantically 
 that would trip up such a student. in much the same way, J would be rather easy for a K programmer
 to learn and vice-versa.
 
-#### 🦀 "strangeness budget"
+#### 🤨 "strangeness budget"
 
 if we look back to programming languages, we can find a fantastic example of this phenomenon and
 the preconceptions many programmers bring with them quietly playing out in the the development of
@@ -528,21 +528,164 @@ heavy emphasis on metaprogramming facilities. code is also syntax, and syntax is
 can then be written.** this style of hyper-succint code is ultimately a dialect to be embedded
 _within_ a "host" language.
 
+#### 🦀 brevity is not a mutually exclusive property
+
+writing concise Rust code did not detract from the traditional benefits of the language.
+
+rather than writing this as a 1:1 direct translation of the [Incunabulum][incunabulum], i was
+able to follow familiar idioms when implementing j, and found myself enjoying the usual benefits
+of writing software in Rust.
+
+**NB:** this next section assumes some previous familiarity with Rust's type system.
+
+**🌳 abstract syntax tree**
+
+as a straightforward example, this snippet of `src/r.rs` shows the definition of j's AST node.
+`D` and `M` represent dyadic and monadic verbs: `+`, `*`, `i.`, and so forth. `N` represents the
+abstract syntax tree representation of a parsed expression.
+
+while the monadic and dyadic verbs are simple enumerations, notice that the the `N` node contains
+heterogenous payloads for each variant. outlining the benefits of pattern matching and algebraic
+data types (ADTs) is out-of-scope for this essay, but in short: this approach helps prevent
+invalid fields from being accessed or written to. interacting with the `l` and `r` fields will
+cause a compilation failure, _unless_ we are within a block of code that has properly matched
+against an `A::N` value.
+
+```rust
+// src/r.rs
+/**dyadic verb       */ #[derive(DBG,PE,PO)] pub enum D {Plus,Mul}
+/**monadic verb      */ #[derive(DBG,PE,PO)] pub enum M {Idot,Shape,Tally,Transpose}
+/**ast node          */                      pub enum N {/**array literal*/    A{a:A},
+                                                         /**dyadic verb*/      D{d:D,l:B<N>,r:B<N>},
+                                                         /**monadic verb*/     M{m:M,o:B<N>},
+                                                         /**symbol*/           S{sy:SY},
+                                                         /**symbol assignment*/V{sy:SY,e:B<N>}}
+```
+
+**🔐 interfaces with guardrails**
+
+for example, these abbreviated snippets of `src/a.rs`. first, we define a collection of "marker"
+types, to indicate whether the memory of an array has been initialized yet. this uses a "sealed"
+trait; see the [API Guidelines][api-guidelines] for more information on this pattern.
+
+```rust
+// src/a.rs
+/**sealed trait, memory markers*/pub trait MX{} impl MX for MU {} impl MX for MI {}
+/**marker: memory uninitialized*/#[derive(CL,DBG)]pub struct MU;
+/**marker: memory initialized*/  #[derive(CL,DBG)]pub struct MI;
+```
+
+next, we use these marker types and `PhantomData` to mark an array as having memory that is either
+initialized (`MI`), or uninitialized (`MU`). if no generic is given to `A<T>`, i.e. `A`, it will
+use `MI` by default.
+
+```rust
+use super::*; use std::marker::PhantomData as PD;
+#[derive(DBG)]pub struct A<X=MI>{/**columns*/ pub m:U,      /**rows*/  pub n:U,
+                                 /**data*/        d:*mut u8,/**layout*/    l:L,
+                                 /**memory state*/i:PD<X>,                    }
+```
+
+now, what benefits does this provide?
+
+it means that we can use `impl A<MI>{}` blocks to "gate" public interfaces, so that array access
+cannot be performed until an array has been initialized. `impl<X:MX> A<X>` may in turn be used to
+provide interfaces that apply to _both_ uninitialized and initialized arrays.
+
+```rust
+impl A<MI>{
+ pub fn get(&self,i:U,j:U)->R<I>{Ok(unsafe{self.ptr_at(i,j)?.read()})}
+}
+impl<X:MX> A<X>{
+  pub fn set(&mut self,i:U,j:U,v:I)->R<()>{unsafe{self.ptr_at(i,j)?.write(v);}Ok(())}
+  pub(crate)fn ptr_at(&self,i:U,j:U)->R<*mut I>{self.ptr_at_impl(i,j,Self::index)}
+}
+```
+
+...and finally, it means that we may mark certain interfaces as safe, or unsafe. for example,
+`A::init_with` provides a safe interface to initialize the memory of an array, using a callback
+that is given the position `(i,j)` of each cell.
+
+conversely, `A::set` may be used to manually initialize each position of the array, but places the
+onus upon the caller to determine whether or not each cell has been initialized. thus, `A::finish`
+is an unsafe interface, and must be called within an `unsafe{}` block.
+
+```rust
+impl A<MU>{
+  pub fn new(m:U,n:U)->R<Self>{Self::alloc(m,n).map(|(l,d)|A{m,n,d,l,i:PD})}
+  pub fn init_with<F:FnMut(U,U)->R<I>>(mut self,mut f:F)->R<A<MI>>{let(A{m,n,..})=self;
+    for(i)in(1..=m){for(j)in(1..=n){let(v)=f(i,j)?;self.set(i,j,v)?;}}Ok(unsafe{self.finish()})}
+  pub unsafe fn finish(self)->A<MI>{std::mem::transmute(self)}
+}
+```
+
+now, we can compare this to how this code might be formatted in common Rust, without such compact
+formatting and such short symbols:
+
+```rust
+impl Array<MemoryUninit>{
+    pub fn new(m: usize, n: usize) -> Result<Self, anyhow::Error>{
+        let (l, d) = Self::alloc(m, n)?;
+        let a = A { m, n, d, l, i:PD };
+        Ok(a)
+    }
+
+    pub fn init_with<F>(mut self, mut f: F) -> Result<Array<MemoryInit>, anyhow::Error>
+    where
+        F: FnMut(usize, usize) -> Result<u32, anyhow::Error>
+    {
+        for i in 1..=self.m {
+            for j in 1..=self.n {
+                let v = f(i, j)?;
+                self.set(i, j, v)?;
+            }
+        }
+        let a = unsafe{ self.finish() };
+        Ok(a)
+    }
+
+    pub unsafe fn finish(self) -> Array<MemoryInit> {
+        std::mem::transmute(self)
+    }
+}
+```
+
+**these two snippets are not any mechanically different!** it bears consideration that this
+terse style did not prevent me from using familiar idioms. "_Whitney C_" may be a grand departure
+from other variants of C, but it _is_ still ultimately a dialect of C.
+
+i found null pointers and segmentation faults when trying to compile and run the Incunabulum,
+similar to other afternoon projects i've written in C myself.
+
+```
+; gcc --version | head -n 2
+gcc (GCC) 13.1.0
+Copyright (C) 2023 Free Software Foundation, Inc.
+ *
+; ./a.out
+1 + 2
+zsh: segmentation fault (core dumped)  ./a.out
+ *
+; ./a.out
+< 1 2
+zsh: segmentation fault (core dumped)  ./a.out
+ *
+; ./a.out
+# 1 2 3
+zsh: segmentation fault (core dumped)  ./a.out
+```
+
+"_Whitney Rust_" is similarly a very different language, but it _is_ again, a dialect of Rust.
+
 #### 🏠 brevity is an architectural principal
 
-true pursuit of brevity goes beyond syntax.
+brevity is a property that applies beyond syntax.
 
-
-
-****
-
-#### TODO XXX OUTLINE
-
+todo...
 * example of a pull request / commit in this project; adverb support
 * simple syntax contributed to simple workflows
 * picking this project back up after long breaks was surprisingly easy
-
-...
+* point to "does apl need a type system" for further reading
 
 ---
 
@@ -550,5 +693,5 @@ true pursuit of brevity goes beyond syntax.
 
 [incunabulum]: https://code.jsoftware.com/wiki/Essays/Incunabulum
 [why-k]: https://xpqz.github.io/kbook/Introduction.html#why-k
+[api-guidelines]: https://rust-lang.github.io/api-guidelines/future-proofing.html
 
-TODO: work in some reference to "does apl need a type system"
