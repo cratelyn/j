@@ -125,7 +125,7 @@ use super::*; use std::marker::PhantomData as PD;
 /**monadic verbs*/impl A{
   pub fn m_idot(self)->R<A>{let(a@A{m,n,..})=self;let gi=|i,j|a.get(i,j)?.try_into().map_err(E::from);
     if let(1,1)=(m,n){let(m,n)=(1,gi(1,1)?);let(mut o)=A::new(1,n)?;
-      for(j)in(1..=n){o.set(1,j,j.try_into()?)?;}Ok(unsafe{o.finish()})}
+      for(j)in(1..=n){o.set(1,j,(j-1).try_into()?)?;}Ok(unsafe{o.finish()})}
     else if let(1,2)=(m,n){let(m,n)=(gi(1,1)?,gi(1,2)?);
       let(mut v)=0_u32;let(f)=move |_,_|{let(v_o)=v;v+=1;Ok(v_o)};A::new(m,n)?.init_with(f)}
     else{bail!("i. {m}x{n} not supported")}}

@@ -20,7 +20,7 @@
     #[test]fn $f()->R<()>{let(a@A{m:1,n:1,..})=eval_s($i)? else{bail!("bad dims")};eq!(a.as_slice()?,&[$o]);ok!()}}}
   t!(tally_scalar,"# 1",1);t!(tally_1x3,"# 1 2 3",3);t!(tally_3x3,"# i. 3 3",9);
 } #[cfg(test)]mod idot{use super::*;
-  #[test]fn idot_3()->R<()>{let(a)=eval_s("i. 3")?;eq!(a.m,1);eq!(a.n,3);eq!(a.as_slice()?,&[1,2,3]);ok!()}
+  #[test]fn idot_3()->R<()>{let(a)=eval_s("i. 3")?;eq!(a.m,1);eq!(a.n,3);eq!(a.as_slice()?,&[0,1,2]);ok!()}
   #[test]fn idot_2_3()->R<()>{let(a)=eval_s("i. 2 3")?;eq!(a.m,2);eq!(a.n,3);let o:&[&[I]]=&[&[0,1,2],&[3,4,5]];
     eq!(a.into_matrix()?,o);eq!(a,o);ok!()}
   #[test]fn idot_3_2()->R<()>{let(a)=eval_s("i. 3 2")?;eq!(a.m,3);eq!(a.n,2);let o:&[&[I]]=&[&[0,1],&[2,3],&[4,5]];
