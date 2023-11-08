@@ -32,7 +32,8 @@
     ok!()}
   pub(crate) fn parse(input:&str)->R<O<B<N>>>{const MAX:u32=128;let(mut ts,mut ctx,mut i)=(lex(input)?,V::new(),0);
     while(!ts.is_empty()){if(i>MAX){bail!("max iterations")}parse_(&mut ts,&mut ctx)?;i+=1;}
-    debug_assert!(ts.is_empty());debug_assert_eq!(ctx.len(),1);Ok(ctx.pop())}
+    /*debug*/debug_assert!(ts.is_empty());if(!input.trim().is_empty()){debug_assert_eq!(ctx.len(),1);}/*debug*/
+    Ok(ctx.pop())}
   impl M{fn new(s:&str)->O<M>{use M::*;Some(match s{"i."=>Idot,"$"=>Shape,"#"=>Tally,"|:"=>Transpose,_=>r!(None)})}}
   impl D{fn new(s:&str)->O<D>{use D::*;Some(match s{"+"=>Plus,"*"=>Mul,_=>r!(None)})}}
   #[cfg(test)]mod t{use super::*;
@@ -47,6 +48,6 @@
     t!(parse_symbol_times_symbol,"a * b"); t!(parse_tally_tally_symbol,"# # a");
     tf!(parse_symbol_times_symbol_numbers,"a * b 1"); tf!(parse_tally_tally_symbol_symbol,"# # a b");
     t!(assign_symbol_scalar,"a =: 1"); t!(assign_symbol_slice,"a =: 1 2 3"); t!(assign_symbol_idot,"a =: i. 2 3");
-    t!(assign_symbol_slice_plus_slice,"a =: 1 2 3 + 1 2 3");
+    t!(assign_symbol_slice_plus_slice,"a =: 1 2 3 + 1 2 3"); t!(parse_empty,"");
   }
 }
