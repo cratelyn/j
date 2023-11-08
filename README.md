@@ -686,6 +686,8 @@ todo...
 * simple syntax contributed to simple workflows
 * picking this project back up after long breaks was surprisingly easy
 * point to "does apl need a type system" for further reading
+* brevity allows readers to see parallels at a function/type/module level, rather than an expression level
+  * whitespace alignment is common in many styles. terse code allows whitespace alignment to highlight common structures, at a higher abstraction
 
 ---
 
