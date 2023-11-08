@@ -53,6 +53,7 @@
     assert_eq!(st.get_s("a").unwrap().as_slice().unwrap(),&[3,7]);ok!()}
   // TODO: tests exercising use of variables
 } #[cfg(test)]mod misc{use super::*;
+  #[test]fn empty_statement_evaluates_to_none()->R<()>{is!(eval("",&mut ST::default())?.is_none());ok!()}
   #[test]fn slice_times_transposed_idot_2_3()->R<()>{
     let(a)=eval_s("1 2 3 * |: i. 2 3")?;eq!(a.into_matrix()?,&[&[0,3],&[2,8],&[6,15]]);ok!()}
 } #[cfg(test)]mod display{use super::*;

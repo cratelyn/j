@@ -7,6 +7,7 @@ pub(crate)use{std::{alloc::Layout as L,clone::Clone as CL,cmp::{PartialEq as PE,
 pub(crate)use{anyhow::{Context,Error as E,anyhow as err,bail}};
 #[macro_export] /**`return`*/              macro_rules! r   {()=>{return};($e:expr)=>{return $e};}
 #[macro_export] /**`return Ok(Some(..))`*/ macro_rules! rro {($e:expr)=>{r!(Ok(Some($e)))}}
+#[macro_export] /**`return Ok(None)`*/     macro_rules! rrn {(       )=>{r!(Ok(None    ))}}
 #[macro_export] /**`Ok(())`*/              macro_rules! ok {()=>{Ok(())}}
 #[macro_export] /**`Box::new(..)`*/        macro_rules! b   {($e:expr)=>{B::new($e)};}
 #[macro_export] /**`unreachable!()`*/      macro_rules! ur  {()=>{unreachable!()}}
