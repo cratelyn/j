@@ -8,9 +8,9 @@
     #[test]fn lex_1plus2()->R<()>{let ts=lex("1 + 2")?;eq!(ts.as_ref(),[T::I(1),T::V(S::from("+")),T::I(2)]);ok!()}
   }
 }/**input parsing*/pub(crate) use parse::{D,M,N,parse};mod parse{use {crate::*,super::lex::{T,lex}};
-  /**dyadic verb       */ #[derive(DBG,PE,PO)] pub enum D {Plus,Mul}
-  /**monadic verb      */ #[derive(DBG,PE,PO)] pub enum M {Idot,Shape,Tally,Transpose}
-  /**ast node          */                      pub enum N {/**array literal*/    A{a:A},
+  /**dyadic verb       */ #[derive(DBG,PE,PO)] pub enum D {Plus,Mul,  Left, Right         }
+  /**monadic verb      */ #[derive(DBG,PE,PO)] pub enum M {Idot,Shape,Tally,Transpose,Same}
+  /**ast node          */ #[derive(DBG,     )] pub enum N {/**array literal*/    A{a:A},
                                                            /**dyadic verb*/      D{d:D,l:B<N>,r:B<N>},
                                                            /**monadic verb*/     M{m:M,o:B<N>},
                                                            /**symbol*/           S{sy:SY},
