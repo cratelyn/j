@@ -1,6 +1,6 @@
 use super::*; use std::ops::Not;
-/**symbol*/      #[derive(PE,DBG,PO,Ord,Eq)]pub struct SY(S);
-/**symbol table*/#[derive(Default)]         pub struct ST{st:BM<SY,A>}
+/**symbol*/      #[derive(PE,DBG,PO,Ord,Eq,CL)]pub struct SY(S);
+/**symbol table*/#[derive(Default)]            pub struct ST{st:BM<SY,A>}
 
 /**symbol parsing*/mod syfs{use super::*;
   impl FS for SY{type Err = E;fn from_str(s:&str)->R<SY>{
