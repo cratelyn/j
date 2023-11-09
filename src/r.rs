@@ -34,8 +34,8 @@
     while(!ts.is_empty()){if(i>MAX){bail!("max iterations")}parse_(&mut ts,&mut ctx)?;i+=1;}
     /*debug*/debug_assert!(ts.is_empty());if(!input.trim().is_empty()){debug_assert_eq!(ctx.len(),1);}/*debug*/
     Ok(ctx.pop())}
-  impl M{fn new(s:&str)->O<M>{use M::*;Some(match s{"i."=>Idot,"$"=>Shape,"#"=>Tally,"|:"=>Transpose,_=>r!(None)})}}
-  impl D{fn new(s:&str)->O<D>{use D::*;Some(match s{"+"=>Plus,"*"=>Mul,_=>r!(None)})}}
+  impl M{fn new(s:&str)->O<M>{use M::*;Some(match s{"i."=>Idot,"$"=>Shape,"#"=>Tally,"|:"=>Transpose,"["|"]"=>Same,_=>r!(None)})}}
+  impl D{fn new(s:&str)->O<D>{use D::*;Some(match s{"+"=>Plus,"*"=>Mul,"["=>Left,"]"=>Right,_=>r!(None)})}}
   #[cfg(test)]mod t{use super::*;
     macro_rules! t{($f:ident,$i:literal)=>{#[test]fn $f()->R<()>{let ast=parse($i)?;ok!()}}}
     macro_rules! tf{($f:ident,$i:literal)=>{#[test] #[should_panic]fn $f(){parse($i).unwrap();}}}
