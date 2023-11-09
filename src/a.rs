@@ -99,6 +99,7 @@ use super::*; use std::marker::PhantomData as PD;
   impl TF<&[I]> for A{type Error=E;fn try_from(s:&[I])->R<A>{
     let(m,n)=(1,s.len());let(mut a)=A::new(m,n)?;
     for(i,v)in(s.iter().enumerate()){let(i)=(i+1).try_into()?;a.set(1,i,*v)?;}Ok(unsafe{a.finish()})}}
+  impl TF<V<I>> for A{type Error=E;fn try_from(v:V<I>)->R<A>{v.as_slice().try_into()}}
   #[test]fn scalars_can_be_a_slice()->R<()>{let(a)=A::from_i(420)?;let _:&[I]=a.as_slice()?;ok!()}
   #[test]fn from_empty()->R<()>{let a:&[I]=&[];let _=A::try_from(a)?;ok!()}
   #[test]fn from_one()->R<()>{let a:&[I]=&[42];let a=A::try_from(a)?;eq!(a.get(1,1)?,42);ok!()}

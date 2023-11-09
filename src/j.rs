@@ -3,7 +3,7 @@
 /**array*/mod a; /**read input*/mod r; /**symbol table*/mod s;
 pub use self::{a::*,r::*,s::*};
 pub fn eval(input:&str,st:&mut ST)->R<O<A>>{
-  let(ast)=match(parse(input)?){Some(x)=>x,None=>rrn!()};eval_(ast,st)}
+  let(mut ts)=lex(input)?;let(ast)=match(parse(&mut ts)?){Some(x)=>x,None=>rrn!()};eval_(ast,st)}
 fn eval_(ast:B<N>,st:&mut ST)->R<O<A>>{use{M::*,D::*};
   let(mut rec)=|a|->R<A>{match(eval_(a,st)){Ok(Some(a))=>Ok(a),Err(e)=>Err(e), // recursively evaluate subexpression.
     Ok(None)=>Err(err!("expression did not result in a value"))}};
