@@ -44,6 +44,15 @@
     eq!(a.into_matrix()?,&[&[0,1],&[4,6],&[12,15]]);ok!()}
   #[test]fn mult_slice_to_rotated_slice()->R<()>{
     let(a@A{m:4,n:1,..})=eval_s("1 2 3 4 * i. 4 1")? else{bail!("bad dims")};eq!(a.into_matrix()?,&[&[0],&[2],&[6],&[12]]);ok!()}
+} #[cfg(test)]mod left_and_right{use super::*;
+  #[test]fn left_same_scalar() ->R<()>{let(a)=eval_s("[ 1")?;        eq!(a.as_i()?,1);           ok!()}
+  #[test]fn left_same_slice()  ->R<()>{let(a)=eval_s("[ 1 2 3")?;    eq!(a.as_slice()?,&[1,2,3]);ok!()}
+  #[test]fn right_same_scalar()->R<()>{let(a)=eval_s("] 1")?;        eq!(a.as_i()?,1);           ok!()}
+  #[test]fn right_same_slice() ->R<()>{let(a)=eval_s("] 1 2 3")?;    eq!(a.as_slice()?,&[1,2,3]);ok!()}
+  #[test]fn left_dyad()        ->R<()>{let(a)=eval_s("1 [ 2")?;      eq!(a.as_i()?,1);           ok!()}
+  #[test]fn right_dyad()       ->R<()>{let(a)=eval_s("1 ] 2")?;      eq!(a.as_i()?,2);           ok!()}
+  #[test]fn left_dyad_other()  ->R<()>{let(a)=eval_s("1 [ 2 3 4")?;  eq!(a.as_slice()?,&[2,3,4]);ok!()}
+  #[test]fn right_dyad_other() ->R<()>{let(a)=eval_s("1 ] 2 3 4")?;  eq!(a.as_i()?,1);           ok!()}
 } #[cfg(test)]mod symbol_assignment{use super::*;
   #[test]fn assign_and_get_i()->R<()>{let(mut st)=ST::default();let(a)=eval("a =: 3",&mut st)?;
     assert_eq!(st.get_s("a").unwrap().as_i().unwrap(),3);ok!()}
