@@ -1,11 +1,28 @@
-/**input lexing*/mod lex{use crate::*;
-  /**syntax token*/ #[derive(CL,DBG,PE)] pub(crate) enum T {I(I),V(S)}
-  pub(crate) fn lex(input:&str)->R<V<T>>{input.split_whitespace().map(str::parse::<T>).collect()}
-  impl FS for T{type Err=E;fn from_str(s:&str)->R<T>{Ok(if let Ok(i)=s.parse::<I>(){T::I(i)}else{T::V(s.to_owned())})}}
-  #[cfg(test)]mod t{use super::*;
-    #[test]fn lex_single_scalar()->R<()>{let ts=lex("1")?;eq!(ts.as_ref(),[T::I(1)]);ok!()}
-    #[test]fn lex_1x3()->R<()>{let ts=lex("1 2 3")?;eq!(ts.as_ref(),[T::I(1),T::I(2),T::I(3)]);ok!()}
-    #[test]fn lex_1plus2()->R<()>{let ts=lex("1 + 2")?;eq!(ts.as_ref(),[T::I(1),T::V(S::from("+")),T::I(2)]);ok!()}
+/**input lexing*/pub(crate) use lex::lex;mod lex{use crate::*;
+  /**syntax token*/ #[derive(CL,DBG,PE)] pub(crate) enum T {/*array literal*/A(V<I>),
+  /* NB: this does not identify whether possible verbs  */  /*(ad)verb*/     V(S)   ,
+  /* are monadic or dyadic. that is done during parsing.*/  /*symbol*/       SY(SY) }
+  pub(crate) fn lex(input:&str)->R<V<T>>{use std::ops::Deref;
+    let(mut ts)=input.split_whitespace().peekable(); let(mut o)=V::with_capacity(ts.size_hint().0);
+    while     let Some(t)    =ts.next(){
+           if let Some(sy)   =t.parse().ok().map(T::SY){o.push(sy);}          // symbol
+      else if let Some(mut v)=t.parse().ok().map(|i|vec![i]){                 // array literal
+              macro_rules! peek{()=>{ts.peek().and_then(|t|t.parse().ok())}}  // ..is the next token a number?
+              macro_rules! put{($i:ident)=>{ts.next().map(drop);v.push($i);}} // ..append to our array literal
+              while let Some(i)=peek!(){put!(i);} o.push(T::A(v));}
+      else {o.push(T::V(S::from(t)))}                                         // otherwise, a verb or adverb
+    } r!(Ok(o)) }
+  #[cfg(test)]mod t{use super::{*,T::A as TA,T::V as TV,T::SY as TSY};
+    /// test helper: lex an expression and check the output
+    macro_rules! t{($f:ident,$i:literal,$o:expr)=>{#[test]fn $f()->R<()>{eq!(lex($i)?,$o);ok!()}}}
+    // === lexing unit tests ===
+    t!(lex_1,         "1",            v![TA(v![1])]                                                                  );
+    t!(lex_9,         "9",            v![TA(v![9])]                                                                  );
+    t!(lex_1to3,      "1 2 3",        v![TA(v![1,2,3])]                                                              );
+    t!(lex_monad,     "# 1 2 3",      v![TV(S::from("#")), TA(v![1,2,3])]                                            );
+    t!(lex_dyad,      "1 + 2",        v![TA(v![1]),        TV(S::from("+")), TA(v![2])]                              );
+    t!(lex_two_verbs, "1 + # 1 2 3",  v![TA(v![1]),        TV(S::from("+")), TV(S::from("#")), TA(v![1,2,3])]        );
+    t!(lex_symbol,    "abc",          v![TSY("abc".parse().unwrap())]                                                );
   }
 }/**input parsing*/pub(crate) use parse::{D,M,N,parse};mod parse{use {crate::*,super::lex::{T,lex}};
   /**dyadic verb       */ #[derive(DBG,PE,PO)] pub enum D {Plus,Mul,  Left, Right         }
