@@ -123,6 +123,7 @@ use super::*; use std::marker::PhantomData as PD;
 }
 
 /**monadic verbs*/impl A{
+  pub fn m_same(self)->R<A>{Ok(self)}
   pub fn m_idot(self)->R<A>{let(a@A{m,n,..})=self;let gi=|i,j|a.get(i,j)?.try_into().map_err(E::from);
     if let(1,1)=(m,n){let(m,n)=(1,gi(1,1)?);let(mut o)=A::new(1,n)?;
       for(j)in(1..=n){o.set(1,j,(j-1).try_into()?)?;}Ok(unsafe{o.finish()})}
@@ -136,6 +137,8 @@ use super::*; use std::marker::PhantomData as PD;
 }
 
 /**dyadic verbs*/impl A{
+  pub fn d_left (self,r:A)->R<A>{Ok(self)}
+  pub fn d_right(self,r:A)->R<A>{Ok(r)   }
   pub fn d_plus(self,r:A)->R<A>{A::d_do(self,r,|x,y|x+y)}
   pub fn d_mul (self,r:A)->R<A>{A::d_do(self,r,|x,y|x*y)}
   pub fn d_do(l@A{m:ml,n:nl,..}:A,r@A{m:mr,n:nr,..}:A,f:impl Fn(I,I)->I)->R<A<MI>>{
