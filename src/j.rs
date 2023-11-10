@@ -11,7 +11,7 @@ fn eval_(ast:B<N>,st:&mut ST)->R<O<A>>{use{M::*,D::*};
   N::A{a}    =>Ok(a),
   N::M{m,o}  =>{let(a)=rec(o)?;            match m{Idot=>a.m_idot(),  Shape=>a.m_shape(), Same=>a.m_same(),
                                                    Tally=>a.m_tally(),Transpose=>a.m_trans()}}
-  N::D{d,l,r}=>{let(l,r)=(rec(r)?,rec(l)?);match d{Plus=>l.d_plus(r), Mul=>l.d_mul(r),
+  N::D{d,l,r}=>{let(l,r)=(rec(l)?,rec(r)?);match d{Plus=>l.d_plus(r), Mul=>l.d_mul(r),
                                                    Left=>l.d_left(r), Right=>l.d_right(r)}}
   N::S{sy}   =>{st.get(&sy).ok_or(err!("undefined symbol: {sy:?}"))?;todo!("symbol value clone")}
   N::V{sy,e} =>{let(a)=rec(e)?;st.insert(sy,a);r!(Ok(None))}
