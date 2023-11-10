@@ -99,6 +99,7 @@ use super::*; use std::marker::PhantomData as PD;
   impl TF<&[I]> for A{type Error=E;fn try_from(s:&[I])->R<A>{
     let(m,n)=(1,s.len());let(mut a)=A::new(m,n)?;
     for(i,v)in(s.iter().enumerate()){let(i)=(i+1).try_into()?;a.set(1,i,*v)?;}Ok(unsafe{a.finish()})}}
+  impl TF<V<I>> for A{type Error=E;fn try_from(v:V<I>)->R<A>{v.as_slice().try_into()}}
   #[test]fn scalars_can_be_a_slice()->R<()>{let(a)=A::from_i(420)?;let _:&[I]=a.as_slice()?;ok!()}
   #[test]fn from_empty()->R<()>{let a:&[I]=&[];let _=A::try_from(a)?;ok!()}
   #[test]fn from_one()->R<()>{let a:&[I]=&[42];let a=A::try_from(a)?;eq!(a.get(1,1)?,42);ok!()}
@@ -123,6 +124,7 @@ use super::*; use std::marker::PhantomData as PD;
 }
 
 /**monadic verbs*/impl A{
+  pub fn m_same(self)->R<A>{Ok(self)}
   pub fn m_idot(self)->R<A>{let(a@A{m,n,..})=self;let gi=|i,j|a.get(i,j)?.try_into().map_err(E::from);
     if let(1,1)=(m,n){let(m,n)=(1,gi(1,1)?);let(mut o)=A::new(1,n)?;
       for(j)in(1..=n){o.set(1,j,(j-1).try_into()?)?;}Ok(unsafe{o.finish()})}
@@ -136,6 +138,8 @@ use super::*; use std::marker::PhantomData as PD;
 }
 
 /**dyadic verbs*/impl A{
+  pub fn d_left (self,r:A)->R<A>{Ok(self)}
+  pub fn d_right(self,r:A)->R<A>{Ok(r)   }
   pub fn d_plus(self,r:A)->R<A>{A::d_do(self,r,|x,y|x+y)}
   pub fn d_mul (self,r:A)->R<A>{A::d_do(self,r,|x,y|x*y)}
   pub fn d_do(l@A{m:ml,n:nl,..}:A,r@A{m:mr,n:nr,..}:A,f:impl Fn(I,I)->I)->R<A<MI>>{
@@ -147,8 +151,8 @@ use super::*; use std::marker::PhantomData as PD;
       {if(s.len()==*m){let(f)=|i,j|{let(x)=a.get(i,j)?;let(y)=(s[i-1]);Ok(f(x,y))};r!(A::new(*m,*n)?.init_with(f))}}
     else if (ml==mr)&&(nl==nr){let(m,n)=(ml,nl);r!(A::new(m,n)?.init_with(                                              // matching arrays
       |i,j|{let(l,r)=(l.get(i,j)?,r.get(i,j)?);Ok(f(l,r))}))}
-    else if (ml==nr)&&(nl==mr)                                                                                          // rotation
-      {let(f)=|i,j|{let(x)=l.get(i,j)?;let(y)=r.get(j,i)?;Ok(f(x,y))};r!(A::new(ml,nl)?.init_with(f))}
+    else if (ml==nr)&&(nl==mr) /*NB: inherit the dimensions of the right-hand operand.*/                                // rotation
+      {let(f)=|i,j|{let(x)=l.get(j,i)?;let(y)=r.get(i,j)?;Ok(f(x,y))};r!(A::new(mr,nr)?.init_with(f))}
     bail!("length error");
   }
 }

@@ -13,7 +13,7 @@ pub(crate)use{anyhow::{Context,Error as E,anyhow as err,bail}};
 #[macro_export] /**`unreachable!()`*/      macro_rules! ur  {()=>{unreachable!()}}
 /**`Result<T, anyhow::Error>`*/            pub type R<T> = Result<T,E>;
 #[cfg(test)]/**test prelude*/pub(crate) mod tp{
-  pub(crate) use{assert_eq as eq,assert_ne as neq,assert as is};
+  pub(crate) use{assert_eq as eq,assert_ne as neq,assert as is,vec as v};
 }
 // todo: extension trait for abbreviated `try_into`, `try_from`
 // todo: extension trait for abbreviated `map`, `and_then`, `unwrap`
