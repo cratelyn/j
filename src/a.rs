@@ -150,8 +150,8 @@ use super::*; use std::marker::PhantomData as PD;
       {if(s.len()==*m){let(f)=|i,j|{let(x)=a.get(i,j)?;let(y)=(s[i-1]);Ok(f(x,y))};r!(A::new(*m,*n)?.init_with(f))}}
     else if (ml==mr)&&(nl==nr){let(m,n)=(ml,nl);r!(A::new(m,n)?.init_with(                                              // matching arrays
       |i,j|{let(l,r)=(l.get(i,j)?,r.get(i,j)?);Ok(f(l,r))}))}
-    else if (ml==nr)&&(nl==mr)                                                                                          // rotation
-      {let(f)=|i,j|{let(x)=l.get(i,j)?;let(y)=r.get(j,i)?;Ok(f(x,y))};r!(A::new(ml,nl)?.init_with(f))}
+    else if (ml==nr)&&(nl==mr) /*NB: inherit the dimensions of the right-hand operand.*/                                // rotation
+      {let(f)=|i,j|{let(x)=l.get(j,i)?;let(y)=r.get(i,j)?;Ok(f(x,y))};r!(A::new(mr,nr)?.init_with(f))}
     bail!("length error");
   }
 }
