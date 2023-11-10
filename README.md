@@ -25,10 +25,14 @@ provided. variables may be defined.
 * `|:` "transpose" rotates its argument
 * `#` "tally" counts the elements in its argument
 * `$` "shape" returns a value containing the dimensions of its argument
+* `[` "same" returns the given value
+* `]` "same" returns the given value
 
 **dyadic verbs**
 * `+` returns the sum of its two arguments
 * `*` returns the product of its two arguments
+* `[` "left" returns the left value
+* `]` "right" returns the right value
 
 variables are assigned using `=:`. variable names may only contain lowercase ASCII `a-z`
 characters, numeric `0-9` characters, and `_` underscores. variable names must begin with a
