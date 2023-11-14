@@ -59,6 +59,7 @@ use super::*; use std::marker::PhantomData as PD;
   impl A<MI>{
     pub fn zeroed(m:U,n:U)->R<Self>{let(l,d)=Self::allocz(m,n)?;Ok(A{m,n,d,l,i:PD})}
     pub fn from_i(i:I)->R<Self>{let mut a=A::new(1,1)?;a.set(1,1,i)?;Ok(unsafe{a.finish()})}}
+  impl TF<I> for A<MI>{type Error=E;fn try_from(i:I)->R<Self>{A::from_i(i)}}
   impl<X:MX> A<X>{
     fn alloc(m:U,n:U)->R<(L,*mut u8)>{let(l)=Self::l(m,n)?;let d=unsafe{alloc(l)};Ok((l,d))}
     fn allocz(m:U,n:U)->R<(L,*mut u8)>{let(l)=Self::l(m,n)?;let d=unsafe{alloc_zeroed(l)};Ok((l,d))}
