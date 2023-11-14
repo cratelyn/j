@@ -165,6 +165,47 @@ use super::*; use std::marker::PhantomData as PD;
   }
 }
 
+/**monadic adverbs*/mod adverbs_m{use super::*;
+  impl Ym{
+    /// using this adverb, apply the given dyadic verb to the provided operand.
+    pub fn apply(&self,d:D,a:A)->R<A>{use Ym::*;match(self){Insert=>Ym::insert(d,a),Prefix=>Ym::prefix(d,a)}}
+    fn insert(d:D,a:A)->R<A>{let mut v=a.vals();let(i)=v.next().ok_or(err!("empty"))?;v.fold(i,d.f()).try_into()}
+    fn prefix(d:D,a:A)->R<A>{
+              let d_=|i|{use{D::*};match(d){Mul=>1,_=>i}};
+           if let Ok(i)=a.as_i()    {A::from_i(d_(i))}
+      else if let Ok(s)=a.as_slice(){let (m,n)=(s.len(),s.len());
+                                     let p=|i,j|if(j>i){Ok(0)}else{a.get(1,j).map(d_)};
+                                     A::new(m,n)?.init_with(p)}
+      else { bail!("monadic `\\` is not implemented for matrices") }}
+  }
+  // === monadic `/`, `Ym::Insert` tests
+  macro_rules! test_insert{($f:ident,$d:expr,$a:expr,$o:expr)=>
+    {#[test]fn $f()->R<()>{let(a):R<A>={$a};let(d):D={$d}; // typecheck macro arguments.
+                           let i:I=a.and_then(|a:A|Ym::insert($d,a)).and_then(|a|a.as_i())?;
+                           eq!(i,$o);ok!()}}}
+  test_insert!(add_a_scalar,   D::Plus, A::from_i(42),                           42          );
+  test_insert!(add_a_sequence, D::Plus, <A as TF<&[I]>>::try_from(&[1,2,3,4,5]), (1+2+3+4+5) );
+  test_insert!(mul_a_sequence, D::Mul , <A as TF<&[I]>>::try_from(&[1,2,3,4,5]), (1*2*3*4*5) );
+}
+
+/**dyadic adverbs*/mod adverbs_d{use super::*;
+  impl Yd{
+    /// using this adverb, apply the given dyadic verb to the provided operand.
+    pub fn apply(&self,d:D,l:A,r:A)->R<A>{use Yd::*;match(self){Table=>Yd::table(d,l,r),Infix=>Yd::infix(d,l,r)}}
+    fn table(d:D,l:A,r:A)->R<A>{let (l_i,r_i)=(l.as_i()    ,r.as_i());
+                                let (l_s,r_s)=(l.as_slice(),r.as_slice());
+           if let (Ok(l),Ok(r))=(l_i,r_i){let(i)=d.f()(l,r);A::from_i(i)}
+      else if let (Ok(l),Ok(r))=(l_s,r_s){let(m,n)=(l.len(),r.len());let(d)=d.f();
+                                          let f=|i,j|->R<I>{let(x,y)=(l[i-1],r[j-1]);Ok(d(x,y))};
+                                          A::new(m,n)?.init_with(f)}
+      else {bail!("unexpected fallthrough in Yd::table")}}
+    fn infix(d:D,l:A,r:A)->R<A>{let(s)=r.as_slice().map_err(|_|err!("infix rhs must be a slice"))?;
+                                let(il)=l.as_i()   .map_err(|_|err!("infix lhs must be a scalar"))?.try_into()?;
+                                let(ic)=(s.len()-il)+1;
+      A::new(ic,il)?.init_with(|i,j|Ok(s[(i-1)+(j-1)]))}
+  }
+}
+
 /**deep-copy*/impl A<MI>{
   pub fn deep_copy(&self)->R<A>{let A{m,n,l:li,d:di,i:_}=*self;A::new(m,n)?.init_with(|i,j|{self.get(i,j)})}
 }
