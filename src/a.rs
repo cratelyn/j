@@ -140,11 +140,16 @@ use super::*; use std::marker::PhantomData as PD;
     let(f)=|i_o,j_o|{i.get(j_o,i_o)};A::new(m_o,n_o)?.init_with(f)}
 }
 
-/**dyadic verbs*/impl A{
-  pub fn d_left (self,r:A)->R<A>{Ok(self)}
-  pub fn d_right(self,r:A)->R<A>{Ok(r)   }
-  pub fn d_plus(self,r:A)->R<A>{A::d_do(self,r,|x,y|x+y)}
-  pub fn d_mul (self,r:A)->R<A>{A::d_do(self,r,|x,y|x*y)}
+/**dyadic verbs*/impl D{
+  /*return dyad function**/ pub fn f(&self)->fn(I,I)->I{use D::*;
+    match(self){Plus=>D::add, Mul=>D::mul, Left=>D::left, Right=>D::right} }
+  /*add two numbers*/fn add (x:I,y:I)->I{x+y} /*multiply two numbers*/fn mul  (x:I,y:I)->I{x*y}
+  /*left           */fn left(x:I,y:I)->I{x  } /*right               */fn right(x:I,y:I)->I{  y}
+} impl A{
+  pub fn d_left (self,r:A)->R<A>{Ok(self)                }
+  pub fn d_right(self,r:A)->R<A>{Ok(r)                   }
+  pub fn d_plus(self,r:A) ->R<A>{A::d_do(self,r,D::add)}
+  pub fn d_mul (self,r:A) ->R<A>{A::d_do(self,r,D::mul)}
   pub fn d_do(l@A{m:ml,n:nl,..}:A,r@A{m:mr,n:nr,..}:A,f:impl Fn(I,I)->I)->R<A<MI>>{
             let(li,ri)=(l.as_i().ok(),r.as_i().ok());let(ls,rs)=(l.as_slice().ok(),r.as_slice().ok());
          if let(Some(li),Some(ri))=(li,ri){r!(A::from_i(f(li,ri)))}                                                     // two scalars
