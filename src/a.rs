@@ -74,7 +74,9 @@ use super::*; use std::marker::PhantomData as PD;
     pub fn get(&self,i:U,j:U)->R<I>{Ok(unsafe{self.ptr_at(i,j)?.read()})}
     pub fn get_uc(&self,i:U,j:U)->R<I>{Ok(unsafe{self.ptr_at_uc(i,j)?.read()})}
     /// returns an iterator whose elements are tuples (i,j) across the array's positions.
-    pub fn iter(&self)->impl IT<Item=(U,U)>{let A{m,n,..}=*self;(1..=m).flat_map(move|i|(1..=n).map(move|j|(i,j)))}}
+    pub fn iter(&self)->impl IT<Item=(U,U)>{let A{m,n,..}=*self;(1..=m).flat_map(move|i|(1..=n).map(move|j|(i,j)))}
+    pub fn vals<'a>(&'a self)->impl IT<Item=I> + 'a{let A{m,n,..}=*self;
+      (1..=m).flat_map(move|i|(1..=n).map(move|j|self.get_uc(i,j).expect("reads work")))}}
   impl<X:MX> A<X>{
     /// sets the value at the given position.
     pub fn set(&mut self,i:U,j:U,v:I)->R<()>{unsafe{self.ptr_at(i,j)?.write(v);}Ok(())}
