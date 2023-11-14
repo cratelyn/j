@@ -13,6 +13,8 @@ fn eval_(ast:B<N>,st:&mut ST)->R<O<A>>{use{M::*,D::*};
                                                    Tally=>a.m_tally(),Transpose=>a.m_trans()}}
   N::D{d,l,r}=>{let(l,r)=(rec(l)?,rec(r)?);match d{Plus=>l.d_plus(r), Mul=>l.d_mul(r),
                                                    Left=>l.d_left(r), Right=>l.d_right(r)}}
+  N::Ym{ym,d,o}=>{rec(o).and_then(|a|ym.apply(d,a))}
+  N::Yd{yd,d,l,r}=>{let(l,r)=(rec(l)?,rec(r)?);yd.apply(d,l,r)}
   N::S{sy}   =>{st.get(&sy).ok_or(err!("undefined symbol: {sy:?}"))?;todo!("symbol value clone")}
-  N::V{sy,e} =>{let(a)=rec(e)?;st.insert(sy,a);r!(Ok(None))}
+  N::E{sy,e} =>{let(a)=rec(e)?;st.insert(sy,a);r!(Ok(None))}
 }.map(O::Some)}
