@@ -12,7 +12,8 @@ use super::*; use std::marker::PhantomData as PD;
 
 /**memory indexing*/mod i{use super::*;
   impl<X:MX> A<X>{
-    fn oob(&self,i:U,j:U)->R<()>{let A{m,n,..}=*self;if(i==0||j==0||i>m||j>n){bail!("oob")}ok!()}
+    fn oob(&self,i:U,j:U)->R<()>{let A{m,n,..}=*self;
+      if(i==0||j==0||i>m||j>n){bail!("({i},{j}) is out-of-bounds of ({m},{n})")}ok!()}
     /// returns the scalar `A_ij` within this array. returns an error if position is out-of-bounds.
     pub fn index(&self,i:U,j:U)->R<U>   {self.oob(i,j)?;let A{m,n,..}=*self;let(i,j)=(i-1,j-1);Ok((i*n)+j)}
     /// returns the scalar `A_ij` within this array. does not check if the position is in bounds.
