@@ -658,29 +658,6 @@ impl Array<MemoryUninit>{
 terse style did not prevent me from using familiar idioms. "_Whitney C_" may be a grand departure
 from other variants of C, but it _is_ still ultimately a dialect of C.
 
-i found null pointers and segmentation faults when trying to compile and run the Incunabulum,
-similar to other afternoon projects i've written in C myself.
-
-```
-; gcc --version | head -n 2
-gcc (GCC) 13.1.0
-Copyright (C) 2023 Free Software Foundation, Inc.
- *
-; ./a.out
-1 + 2
-zsh: segmentation fault (core dumped)  ./a.out
- *
-; ./a.out
-< 1 2
-zsh: segmentation fault (core dumped)  ./a.out
- *
-; ./a.out
-# 1 2 3
-zsh: segmentation fault (core dumped)  ./a.out
-```
-
-"_Whitney Rust_" is similarly a very different language, but it _is_ again, a dialect of Rust.
-
 #### 🏠 brevity is an architectural principal
 
 brevity is a property that applies beyond syntax.
@@ -688,10 +665,26 @@ brevity is a property that applies beyond syntax.
 todo...
 * example of a pull request / commit in this project; adverb support
 * simple syntax contributed to simple workflows
-* picking this project back up after long breaks was surprisingly easy
+  * setting up a reference for coordinates? run `nvim src/a.rs`, `4z<Enter>`, `:split`, `:res 4`. one shell command, one navigation step, two commands.
+  * rerunning tests in an i3 window `fd . | entr -rc cargo test --message-format=short --quiet`
+* picking this project back up after long breaks was surprisingly easy. there wasn't much to read!
 * point to "does apl need a type system" for further reading
 * brevity allows readers to see parallels at a function/type/module level, rather than an expression level
+  * making use of _horizontal_ space in code formatting! c programmers commonly do this too :) determining when felt just the same as deciding when to place empty-lines in "traditional" code.
   * whitespace alignment is common in many styles. terse code allows whitespace alignment to highlight common structures, at a higher abstraction
+  * ^^^ consider this snippet from the array access logic:
+```rust
+    pub fn index(&self,i:U,j:U)->R<U>   {self.oob(i,j)?;let A{m,n,..}=*self;let(i,j)=(i-1,j-1);Ok((i*n)+j)}
+    pub fn index_uc(&self,i:U,j:U)->R<U>{               let A{m,n,..}=*self;let(i,j)=(i-1,j-1);Ok((i*n)+j)}
+```
+  * the difference between the "checked" and "unchecked" methods is immediately visible.
+
+* `--word-diff-regex=.` for character diffs in git
+
+* the rust borrow checker has a tendency to nudge you away from design patterns that are not memory-safe.
+  similarly, a terse style naturally enforces good control-flow patterns. spaghetti code is much
+  easier to spot, puts an upper-bound on loop/conditional nesting
+* you don't make copy paste errors if it is easier to rewrite it ("idioms over libraries" APL philosophy)
 
 ---
 
