@@ -712,18 +712,19 @@ todo...
 ### 🔗 works cited
 
 * ["Future Proofing"](https://rust-lang.github.io/api-guidelines/future-proofing.html)
-[api-guidelines]: https://rust-lang.github.io/api-guidelines/future-proofing.html
 * ["Incunabulum"](https://code.jsoftware.com/wiki/Essays/Incunabulum)
-[incunabulum]: https://code.jsoftware.com/wiki/Essays/Incunabulum
 * ["J: Gerunds And Atomic Representation"](https://code.jsoftware.com/wiki/Vocabulary/GerundsAndAtomicRepresentation)
-[j-gerunds]: https://code.jsoftware.com/wiki/Vocabulary/GerundsAndAtomicRepresentation
 * ["J: Getting Started"](https://code.jsoftware.com/wiki/Guides/Getting_Started)
-[j-getting-started]: https://code.jsoftware.com/wiki/Guides/Getting_Started
 * ["J: NuVoc"](https://code.jsoftware.com/wiki/NuVoc)
-[j-nuvoc]: https://code.jsoftware.com/wiki/NuVoc
 * ["The language strangeness budget"](https://steveklabnik.com/writing/the-language-strangeness-budget)
-[klabnik-budget]: https://steveklabnik.com/writing/the-language-strangeness-budget
 * ["Why K"](https://xpqz.github.io/kbook/Introduction.html#why-k)
-[why-k]: https://xpqz.github.io/kbook/Introduction.html#why-k
 * ["Why Rust’s postfix await syntax is good"](https://blog.ceejbot.com/posts/postfix-await/)
+
+[api-guidelines]: https://rust-lang.github.io/api-guidelines/future-proofing.html
+[incunabulum]: https://code.jsoftware.com/wiki/Essays/Incunabulum
+[j-gerunds]: https://code.jsoftware.com/wiki/Vocabulary/GerundsAndAtomicRepresentation
+[j-getting-started]: https://code.jsoftware.com/wiki/Guides/Getting_Started
+[j-nuvoc]: https://code.jsoftware.com/wiki/NuVoc
+[klabnik-budget]: https://steveklabnik.com/writing/the-language-strangeness-budget
+[why-k]: https://xpqz.github.io/kbook/Introduction.html#why-k
 [ceej-postfix]: https://blog.ceejbot.com/posts/postfix-await/
