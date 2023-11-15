@@ -17,8 +17,7 @@ the jsoftware wiki includes the following story concerning the original Incunabu
 accordingly, j does not intend to be a fully-fledged implementation of an array language.
 
 j values may be integers, arrays, or 2-dimensional matrices; higher-rank matrices are not
-implemented. J's adverbs are not implemented. a small number of monadic and dyadic verbs are
-provided. variables may be defined.
+implemented. a small number of verbs and adverbs are provided. variables may be defined.
 
 **monadic verbs**
 * `i.` "idot" generates a value
@@ -33,6 +32,14 @@ provided. variables may be defined.
 * `*` returns the product of its two arguments
 * `[` "left" returns the left value
 * `]` "right" returns the right value
+
+**monadic adverbs**
+* `/` "insert" places a dyadic verb between items of its argument
+* `\` "prefix" returns successive prefixes of its argument
+
+**dyadic adverbs**
+* `/` "table" returns a table of entries using a dyadic verb and two arguments
+* `\` "infix" applies a verb to successive parts of its right-hand argument
 
 variables are assigned using `=:`. variable names may only contain lowercase ASCII `a-z`
 characters, numeric `0-9` characters, and `_` underscores. variable names must begin with a
@@ -332,12 +339,17 @@ taken together, the expression `1+i.4` adds `1` to each element of the array `0 
 `1 2 3 4`.
 
 `/` is a kind of "adverb." in traditional human languages, an adverb is a part of speech used to
-describe how a verb is performed. this same concept holds roughly true for J and K's adverbs.
+apply an adjective to a verb. or in other words, it describes how a verb is/was performed. this
+same concept holds roughly true for J and K's adverbs.
 
-we won't comprehensively explain adverbs here. in short, `+ /` applies the dyadic `+` operator
-"over" its argument(s).
+adverbs and [gerunds][j-gerunds] are very similar to higher-order functions. a higher-order
+function is a function that either accepts as an argument, or returns, another function. these
+constructs provide a way for programmers to abbreviate or abstract over common control flow
+patterns. J refers to the `/` adverb in this statement as "insert". this operator places the
+dyadic `+` operator between the elements of its argument. thus, `+ / 1 2 3` is equivalent to
+`1+2+3`.
 
-so, the expression above has the following structure, expressed as an ascii diagram.
+so, the expression above has the following structure:
 
 ```
 + / 1 + ! 100
@@ -350,7 +362,7 @@ so, the expression above has the following structure, expressed as an ascii diag
 ┝┳┥
  ┗━━━━━━━━━━━━━━━ find the sum of the given argument
 ┝━━━┳━━━━━━━┥
-    ┗━━━━━━━━━━━━ sum "over" the sequence of numbers from 1 through 100
+    ┗━━━━━━━━━━━━ add each of the numbers from 1 through 100
 ```
 
 these programs share the same structure, save that `i.` is the verb for generating sequences,
@@ -693,4 +705,4 @@ todo...
 [incunabulum]: https://code.jsoftware.com/wiki/Essays/Incunabulum
 [why-k]: https://xpqz.github.io/kbook/Introduction.html#why-k
 [api-guidelines]: https://rust-lang.github.io/api-guidelines/future-proofing.html
-
+[j-gerunds]: https://code.jsoftware.com/wiki/Vocabulary/GerundsAndAtomicRepresentation

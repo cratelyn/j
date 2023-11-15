@@ -140,11 +140,16 @@ use super::*; use std::marker::PhantomData as PD;
     let(f)=|i_o,j_o|{i.get(j_o,i_o)};A::new(m_o,n_o)?.init_with(f)}
 }
 
-/**dyadic verbs*/impl A{
-  pub fn d_left (self,r:A)->R<A>{Ok(self)}
-  pub fn d_right(self,r:A)->R<A>{Ok(r)   }
-  pub fn d_plus(self,r:A)->R<A>{A::d_do(self,r,|x,y|x+y)}
-  pub fn d_mul (self,r:A)->R<A>{A::d_do(self,r,|x,y|x*y)}
+/**dyadic verbs*/impl D{
+  /*return dyad function**/ pub fn f(&self)->fn(I,I)->I{use D::*;
+    match(self){Plus=>D::add, Mul=>D::mul, Left=>D::left, Right=>D::right} }
+  /*add two numbers*/fn add (x:I,y:I)->I{x+y} /*multiply two numbers*/fn mul  (x:I,y:I)->I{x*y}
+  /*left           */fn left(x:I,y:I)->I{x  } /*right               */fn right(x:I,y:I)->I{  y}
+} impl A{
+  pub fn d_left (self,r:A)->R<A>{Ok(self)                }
+  pub fn d_right(self,r:A)->R<A>{Ok(r)                   }
+  pub fn d_plus(self,r:A) ->R<A>{A::d_do(self,r,D::add)}
+  pub fn d_mul (self,r:A) ->R<A>{A::d_do(self,r,D::mul)}
   pub fn d_do(l@A{m:ml,n:nl,..}:A,r@A{m:mr,n:nr,..}:A,f:impl Fn(I,I)->I)->R<A<MI>>{
             let(li,ri)=(l.as_i().ok(),r.as_i().ok());let(ls,rs)=(l.as_slice().ok(),r.as_slice().ok());
          if let(Some(li),Some(ri))=(li,ri){r!(A::from_i(f(li,ri)))}                                                     // two scalars
@@ -157,6 +162,47 @@ use super::*; use std::marker::PhantomData as PD;
     else if (ml==nr)&&(nl==mr) /*NB: inherit the dimensions of the right-hand operand.*/                                // rotation
       {let(f)=|i,j|{let(x)=l.get(j,i)?;let(y)=r.get(i,j)?;Ok(f(x,y))};r!(A::new(mr,nr)?.init_with(f))}
     bail!("length error");
+  }
+}
+
+/**monadic adverbs*/mod adverbs_m{use super::*;
+  impl Ym{
+    /// using this adverb, apply the given dyadic verb to the provided operand.
+    pub fn apply(&self,d:D,a:A)->R<A>{use Ym::*;match(self){Insert=>Ym::insert(d,a),Prefix=>Ym::prefix(d,a)}}
+    fn insert(d:D,a:A)->R<A>{let mut v=a.vals();let(i)=v.next().ok_or(err!("empty"))?;v.fold(i,d.f()).try_into()}
+    fn prefix(d:D,a:A)->R<A>{
+              let d_=|i|{use{D::*};match(d){Mul=>1,_=>i}};
+           if let Ok(i)=a.as_i()    {A::from_i(d_(i))}
+      else if let Ok(s)=a.as_slice(){let (m,n)=(s.len(),s.len());
+                                     let p=|i,j|if(j>i){Ok(0)}else{a.get(1,j).map(d_)};
+                                     A::new(m,n)?.init_with(p)}
+      else { bail!("monadic `\\` is not implemented for matrices") }}
+  }
+  // === monadic `/`, `Ym::Insert` tests
+  macro_rules! test_insert{($f:ident,$d:expr,$a:expr,$o:expr)=>
+    {#[test]fn $f()->R<()>{let(a):R<A>={$a};let(d):D={$d}; // typecheck macro arguments.
+                           let i:I=a.and_then(|a:A|Ym::insert($d,a)).and_then(|a|a.as_i())?;
+                           eq!(i,$o);ok!()}}}
+  test_insert!(add_a_scalar,   D::Plus, A::from_i(42),                           42          );
+  test_insert!(add_a_sequence, D::Plus, <A as TF<&[I]>>::try_from(&[1,2,3,4,5]), (1+2+3+4+5) );
+  test_insert!(mul_a_sequence, D::Mul , <A as TF<&[I]>>::try_from(&[1,2,3,4,5]), (1*2*3*4*5) );
+}
+
+/**dyadic adverbs*/mod adverbs_d{use super::*;
+  impl Yd{
+    /// using this adverb, apply the given dyadic verb to the provided operand.
+    pub fn apply(&self,d:D,l:A,r:A)->R<A>{use Yd::*;match(self){Table=>Yd::table(d,l,r),Infix=>Yd::infix(d,l,r)}}
+    fn table(d:D,l:A,r:A)->R<A>{let (l_i,r_i)=(l.as_i()    ,r.as_i());
+                                let (l_s,r_s)=(l.as_slice(),r.as_slice());
+           if let (Ok(l),Ok(r))=(l_i,r_i){let(i)=d.f()(l,r);A::from_i(i)}
+      else if let (Ok(l),Ok(r))=(l_s,r_s){let(m,n)=(l.len(),r.len());let(d)=d.f();
+                                          let f=|i,j|->R<I>{let(x,y)=(l[i-1],r[j-1]);Ok(d(x,y))};
+                                          A::new(m,n)?.init_with(f)}
+      else {bail!("unexpected fallthrough in Yd::table")}}
+    fn infix(d:D,l:A,r:A)->R<A>{let(s)=r.as_slice().map_err(|_|err!("infix rhs must be a slice"))?;
+                                let(il)=l.as_i()   .map_err(|_|err!("infix lhs must be a scalar"))?.try_into()?;
+                                let(ic)=(s.len()-il)+1;
+      A::new(ic,il)?.init_with(|i,j|Ok(s[(i-1)+(j-1)]))}
   }
 }
 

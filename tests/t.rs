@@ -53,6 +53,9 @@
   #[test]fn right_dyad()       ->R<()>{let(a)=eval_s("1 ] 2")?;      eq!(a.as_i()?,2);           ok!()}
   #[test]fn left_dyad_other()  ->R<()>{let(a)=eval_s("1 [ 2 3 4")?;  eq!(a.as_i()?,1);           ok!()}
   #[test]fn right_dyad_other() ->R<()>{let(a)=eval_s("1 ] 2 3 4")?;  eq!(a.as_slice()?,&[2,3,4]);ok!()}
+  #[test]fn left_dyad_does_not_rotate_slice()->R<()>{
+    /*NB: other operators like + or * may rotate the left-hand argument to fit. [ does not. */
+    let(a)=eval_s("1 2 3 4 [ i. 4 1")?;eq!(a.as_slice()?,&[1,2,3,4]);ok!()}
 } #[cfg(test)]mod symbol_assignment{use super::*;
   #[test]fn assign_and_get_i()->R<()>{let(mut st)=ST::default();let(a)=eval("a =: 3",&mut st)?;
     assert_eq!(st.get_s("a").unwrap().as_i().unwrap(),3);ok!()}
@@ -69,4 +72,50 @@
   #[test]fn display_scalar()->R<()>{let(a)=A::from_i(666)?;eq!(a.to_string(),"666\n");ok!()}
   #[test]fn display_slice()->R<()>{let a:&[I]=&[7,8,9];let a=A::try_from(a)?;eq!(a.to_string(),"7 8 9\n");ok!()}
   #[test]fn display_matrix()->R<()>{let(a)=eval_s("i. 3 3")?;eq!(a.to_string(),"0 1 2\n3 4 5\n6 7 8\n");ok!()}
+} #[cfg(test)]mod adverb{use super::*;
+  // === monadic / "insert" adverb
+  #[test]fn insert_sum_one_number()->R<()>{let(a)=eval_s("+ / 1")?;let(i)=a.as_i()?;eq!(i,1);ok!()}
+  #[test]fn insert_sum_two_numbers()->R<()>{let(a)=eval_s("+ / 1 8")?;let(i)=a.as_i()?;eq!(i,9);ok!()}
+  #[test]fn insert_sum_a_sequence()->R<()>{let(a)=eval_s("+ / i. 4")?;let(i)=a.as_i()?;eq!(i,6);ok!()}
+  #[test]fn insert_sum_a_shifted_sequence()->R<()>{let(a)=eval_s("+ / 1 + i. 4")?;let(i)=a.as_i()?;eq!(i,10);ok!()}
+  #[test]fn insert_product_of_a_sequence()->R<()>{let(a)=eval_s("* / i. 3")?;let(i)=a.as_i()?;eq!(i,0);ok!()}
+  #[test]fn insert_product_of_a_shifted_sequence()->R<()>{let(a)=eval_s("* / 2 + i. 3")?;let(i)=a.as_i()?;eq!(i,24);ok!()}
+  // === monadic \ "prefix" adverb
+  #[test]fn prefix_of_scalar()->R<()>{let(a)=eval_s("] \\ 1")?;let(i)=a.as_i()?;eq!(i,1);ok!()}
+  #[test]fn prefix_of_slice()  ->R<()>{let(a)=eval_s("] \\ 1 2 3")?;eq!(a.into_matrix()?,&[&[1,0,0],
+                                                                                           &[1,2,0],
+                                                                                           &[1,2,3],]);ok!()}
+  #[test]fn prefix_of_slice_2()->R<()>{let(a)=eval_s("+ \\ 1 2 3")?;eq!(a.into_matrix()?,&[&[1,0,0],
+                                                                                           &[1,2,0],
+                                                                                           &[1,2,3],]);ok!()}
+  #[test]fn prefix_of_slice_3()->R<()>{let(a)=eval_s("* \\ 1 2 3")?;eq!(a.into_matrix()?,&[&[1,0,0],
+                                                                                           &[1,1,0],
+                                                                                           &[1,1,1],]);ok!()}
+  // === dyadic / "table" adverb
+  #[test]fn table_of_scalars_plus()->R<()>{let(a)=eval_s("1 + / 1")?;eq!(a.as_i()?,2);ok!()}
+  #[test]fn table_of_scalars_mult()->R<()>{let(a)=eval_s("1 * / 1")?;eq!(a.as_i()?,1);ok!()}
+  #[test]fn table_of_scalar_plus_slice()->R<()>{let(a)=eval_s("1 + / 1 2 3")?;eq!(a.as_slice()?,&[2,3,4]);ok!()}
+  #[test]fn table_of_two_slices_mult()->R<()>{let(a)=eval_s("1 2 3 * / 1 2 3")?;eq!(a.into_matrix()?,&[&[1,2,3],
+                                                                                                       &[2,4,6],
+                                                                                                       &[3,6,9]]);
+                                                                                                       ok!()}
+  #[test]fn table_of_two_diff_slices_mult()->R<()>{let(a)=eval_s("2 4 * / 1 2 3")?;eq!(a.into_matrix()?,&[&[2,4,6],
+                                                                                                          &[4,8,12]]);
+                                                                                                          ok!()}
+  // === dyadic \ "infix" adverb
+  #[test]fn infix_to_reshape_1()->R<()>{let(a)=eval_s("1 ] \\ 1 2 3")?;eq!(a.into_matrix()?,&[&[1],
+                                                                                              &[2],
+                                                                                              &[3]]);
+                                                                                              ok!()}
+  #[test]fn infix_to_reshape_2()->R<()>{let(a)=eval_s("2 ] \\ 1 2 3")?;eq!(a.into_matrix()?,&[&[1,2],
+                                                                                              &[2,3]]);
+                                                                                              ok!()}
+  #[test]fn infix_to_reshape_3()->R<()>{let(a)=eval_s("3 ] \\ 1 2 3 4")?;eq!(a.into_matrix()?,&[&[1,2,3],
+                                                                                                &[2,3,4]]);
+                                                                                                ok!()}
+} #[cfg(test)]mod adverb_fancy{use super::*; /*XXX: these are left unsolved for now*/
+  #[ignore] #[test]fn running_sum_of_a_sequence()->R<()>{let(a)=eval_s("+ / \\ 1 2 3 4 5")?;
+    let(i)=a.as_slice()?;eq!(i,&[1,3,6,10,15]);ok!()}
+  #[ignore] #[test]fn running_product_of_a_sequence()->R<()>{let(a)=eval_s("* / \\ 1 2 3 4 5")?;
+    let(i)=a.as_slice()?;eq!(i,&[1,2,6,24,120]);ok!()}
 }
