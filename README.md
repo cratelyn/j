@@ -451,7 +451,7 @@ after spending time building a piece of software in this style however, i grew t
 far more than i expected i would. in no particular order, let's gloss through some thoughts about
 this experience.
 
-#### 🌐 brevity amplifies local reasoning
+### 🌐 brevity amplifies local reasoning
 
 codebases for real-world production software are often quite large. most include tens of thousands
 lines of code, and it is not uncommon for this number to reach the hundreds of thousands, or even
@@ -473,7 +473,7 @@ further.
 in contrast, concise code has the effect of maximizing the amount of code that may be included in
 local reasoning.
 
-#### 🐘 sufficient brevity implies a DSL
+### 🐘 sufficient brevity implies a DSL
 
 software written in this style includes a "_prelude_" of sorts, defining various shorthand forms.
 these preludes go beyond just type aliases like `typedef char C` or `typedef long I`, however.
@@ -561,7 +561,7 @@ heavy emphasis on metaprogramming facilities. code is also syntax, and syntax is
 can then be written.** this style of hyper-succint code is ultimately a dialect to be embedded
 _within_ a "host" language.
 
-#### 🦀 brevity is not a mutually exclusive property
+### 🦀 brevity is not a mutually exclusive property
 
 writing concise Rust code did not detract from the traditional benefits of the language.
 
@@ -687,7 +687,7 @@ impl Array<MemoryUninit>{
 terse style did not prevent me from using familiar idioms. "_Whitney C_" may be a grand departure
 from other variants of C, but it _is_ still ultimately a dialect of C.
 
-#### 🏠 brevity is an architectural principal
+### 🏠 brevity is an architectural principal
 
 brevity is a property that applies beyond syntax.
 
