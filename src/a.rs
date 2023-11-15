@@ -12,7 +12,8 @@ use super::*; use std::marker::PhantomData as PD;
 
 /**memory indexing*/mod i{use super::*;
   impl<X:MX> A<X>{
-    fn oob(&self,i:U,j:U)->R<()>{let A{m,n,..}=*self;if(i==0||j==0||i>m||j>n){bail!("oob")}ok!()}
+    fn oob(&self,i:U,j:U)->R<()>{let A{m,n,..}=*self;
+      if(i==0||j==0||i>m||j>n){bail!("({i},{j}) is out-of-bounds of ({m},{n})")}ok!()}
     /// returns the scalar `A_ij` within this array. returns an error if position is out-of-bounds.
     pub fn index(&self,i:U,j:U)->R<U>   {self.oob(i,j)?;let A{m,n,..}=*self;let(i,j)=(i-1,j-1);Ok((i*n)+j)}
     /// returns the scalar `A_ij` within this array. does not check if the position is in bounds.
@@ -58,6 +59,7 @@ use super::*; use std::marker::PhantomData as PD;
   impl A<MI>{
     pub fn zeroed(m:U,n:U)->R<Self>{let(l,d)=Self::allocz(m,n)?;Ok(A{m,n,d,l,i:PD})}
     pub fn from_i(i:I)->R<Self>{let mut a=A::new(1,1)?;a.set(1,1,i)?;Ok(unsafe{a.finish()})}}
+  impl TF<I> for A<MI>{type Error=E;fn try_from(i:I)->R<Self>{A::from_i(i)}}
   impl<X:MX> A<X>{
     fn alloc(m:U,n:U)->R<(L,*mut u8)>{let(l)=Self::l(m,n)?;let d=unsafe{alloc(l)};Ok((l,d))}
     fn allocz(m:U,n:U)->R<(L,*mut u8)>{let(l)=Self::l(m,n)?;let d=unsafe{alloc_zeroed(l)};Ok((l,d))}
@@ -72,7 +74,9 @@ use super::*; use std::marker::PhantomData as PD;
     pub fn get(&self,i:U,j:U)->R<I>{Ok(unsafe{self.ptr_at(i,j)?.read()})}
     pub fn get_uc(&self,i:U,j:U)->R<I>{Ok(unsafe{self.ptr_at_uc(i,j)?.read()})}
     /// returns an iterator whose elements are tuples (i,j) across the array's positions.
-    pub fn iter(&self)->impl IT<Item=(U,U)>{let A{m,n,..}=*self;(1..=m).flat_map(move|i|(1..=n).map(move|j|(i,j)))}}
+    pub fn iter(&self)->impl IT<Item=(U,U)>{let A{m,n,..}=*self;(1..=m).flat_map(move|i|(1..=n).map(move|j|(i,j)))}
+    pub fn vals<'a>(&'a self)->impl IT<Item=I> + 'a{let A{m,n,..}=*self;
+      (1..=m).flat_map(move|i|(1..=n).map(move|j|self.get_uc(i,j).expect("reads work")))}}
   impl<X:MX> A<X>{
     /// sets the value at the given position.
     pub fn set(&mut self,i:U,j:U,v:I)->R<()>{unsafe{self.ptr_at(i,j)?.write(v);}Ok(())}
