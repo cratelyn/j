@@ -412,26 +412,34 @@ something like:
 let bytes = (await client.send(request)).into_body();
 ```
 
-many discussions about the validity of this approach have already been borne out at length, and
-i'll point to [this][ceej-postfix] excellent write-up about the benefits of postfix `await` if
-you are interested in reading further.
+many discussions about the validity of this approach have already been borne out at
+[great][rust-57640] [length][rust-50547]. i'll point to [this][ceej-postfix] excellent write-up
+about the benefits of postfix `await` if you are interested in reading further. suffice to say,
+this decision was controversial, and it strayed outside of what some people considered reasonable
+syntax for asynchrony.
 
-one of the core points of debate when weighing out the tradeoffs of this choice was the concept of
-a "_strangeness budget_." the premise of a strangeness budget is the number of new concepts that
-a reader would need to familiarize themselves with in order to be fluent in a new language. those
-in opposition to this design argued that much of this budget had already been spent on the borrow
-checker, pattern matching, etc.
+Steve Klabnik [wrote][klabnik-budget] about this phenomenon:
 
-the _implicit_ part of this strangeness budget is what concepts would be novel to newcomers.
+> [I]t’s important to be considerate of how many things in your language will be strange for your
+> target audience, because if you put too many strange things in, they won’t give it a try.
+>
+> You can see us avoiding blowing the budget in Rust with many of our syntactic choices. We chose
+> to stick with curly braces, for example, because one of our major target audiences, systems
+> programmers, is currently using a curly brace language. Instead, we spend this strangeness
+> budget on our major, core feature: ownership and borrowing.
+
+the implicit part of a strangeness budget, as with the idea of "categories" for human languages,
+is who your students are.
+
 our summing exercise above illustrated that it is both pragmatic and reasonable to frame this
 budget in terms of how far the language strays from "_C-ish_", but that such a budget could exist
 in the first place is illustrative of how relatively homogenous the syntactic structure of
 most programming languages are today.
 
-readability is a property of the reader, indeed.
+Aaron Hsu has remarked in his [talks][hsu-apl] about APL that the people who have the most
+trouble learning languages like APL are often _computer science students_.
 
-* TODO LINK TO CEEJ POST ON POSTFIX AWAIT
-* TODO FIND GOOD SUMMARY OF STRANGENESS BUDGET
+readability is a property of the reader, indeed!
 
 ## 🍄 my experience
 
@@ -689,7 +697,6 @@ todo...
   * setting up a reference for coordinates? run `nvim src/a.rs`, `4z<Enter>`, `:split`, `:res 4`. one shell command, one navigation step, two commands.
   * rerunning tests in an i3 window `fd . | entr -rc cargo test --message-format=short --quiet`
 * picking this project back up after long breaks was surprisingly easy. there wasn't much to read!
-* point to "does apl need a type system" for further reading
 * brevity allows readers to see parallels at a function/type/module level, rather than an expression level
   * making use of _horizontal_ space in code formatting! c programmers commonly do this too :) determining when felt just the same as deciding when to place empty-lines in "traditional" code.
   * whitespace alignment is common in many styles. terse code allows whitespace alignment to highlight common structures, at a higher abstraction
@@ -719,6 +726,10 @@ todo...
 * ["The language strangeness budget"](https://steveklabnik.com/writing/the-language-strangeness-budget)
 * ["Why K"](https://xpqz.github.io/kbook/Introduction.html#why-k)
 * ["Why Rust’s postfix await syntax is good"](https://blog.ceejbot.com/posts/postfix-await/)
+* rust-lang/rust#57640
+* https://github.com/rust-lang/rust/issues/57640
+* https://github.com/rust-lang/rust/issues/50547
+* ["Does APL Need A Type System?"](https://www.youtube.com/watch?v=z8MVKianh54)
 
 [api-guidelines]: https://rust-lang.github.io/api-guidelines/future-proofing.html
 [incunabulum]: https://code.jsoftware.com/wiki/Essays/Incunabulum
@@ -728,3 +739,6 @@ todo...
 [klabnik-budget]: https://steveklabnik.com/writing/the-language-strangeness-budget
 [why-k]: https://xpqz.github.io/kbook/Introduction.html#why-k
 [ceej-postfix]: https://blog.ceejbot.com/posts/postfix-await/
+[rust-57640]: https://github.com/rust-lang/rust/issues/57640
+[rust-50547]: https://github.com/rust-lang/rust/issues/50547
+[hsu-apl]: https://www.youtube.com/watch?v=z8MVKianh54
