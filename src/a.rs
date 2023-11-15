@@ -83,13 +83,12 @@ use super::*; use std::marker::PhantomData as PD;
     fn ptr_at_impl<F:Fn(&Self,U,U)->R<U>>(&self,i:U,j:U,f:F)->R<*mut I>{
       let(o):isize=f(self,i,j).map(|x|x*size_of::<I>())?.try_into()?;let(d)=unsafe{(self.d.offset(o) as *mut I)};
       Ok(d)}
-  }
+  }}
 
 /**scalar conversion/comparison*/mod scalars{use super::*; /*todo...*/
   impl A<MI>{pub fn as_i(&self)->R<I>{let a@A{m:1,n:1,..}=self else{bail!("not a scalar")};a.get(1,1)}}
   #[test]fn scalar_get()->R<()>{let a=A::from_i(42)?;eq!(a.get(1,1)?,42);drop(a);ok!()}
   #[test]fn scalar_set()->R<()>{let mut a=A::from_i(42)?;a.set(1,1,420)?;eq!(a.get(1,1)?,420);drop(a);ok!()}}
-}
 
 /**slices conversion/comparison*/mod slices{use super::*;
   impl A<MI>{ // only allow slice access for initialized arrays
