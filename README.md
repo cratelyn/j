@@ -16,6 +16,10 @@ the jsoftware wiki includes the following story concerning the original Incunabu
 
 accordingly, j does not intend to be a fully-fledged implementation of an array language.
 
+visit <https://www.jsoftware.com/> if you would like to learn more about J. the J wiki's
+["Getting Started"][j-getting-started] page has useful information about installing J, and the
+["NuVoc"][j-nuvoc] page is a useful reference for J's vocabulary.
+
 j values may be integers, arrays, or 2-dimensional matrices; higher-rank matrices are not
 implemented. a small number of verbs and adverbs are provided. variables may be defined.
 
@@ -706,3 +710,5 @@ todo...
 [why-k]: https://xpqz.github.io/kbook/Introduction.html#why-k
 [api-guidelines]: https://rust-lang.github.io/api-guidelines/future-proofing.html
 [j-gerunds]: https://code.jsoftware.com/wiki/Vocabulary/GerundsAndAtomicRepresentation
+[j-getting-started]: https://code.jsoftware.com/wiki/Guides/Getting_Started
+[j-nuvoc]: https://code.jsoftware.com/wiki/NuVoc
