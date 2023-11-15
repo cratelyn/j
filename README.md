@@ -6,7 +6,7 @@ this project is, in spirit, a reimagining of the ["Incunabulum"][incunabulum] J 
 fragment, implemented in Rust. this project is, in a sense, a work of speculative science-fiction,
 examining the linguistics of programming languages.
 
-### ✨ technical overview
+## ✨ technical overview
 
 the jsoftware wiki includes the following story concerning the original Incunabulum:
 
