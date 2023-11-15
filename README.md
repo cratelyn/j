@@ -93,15 +93,15 @@ with array programming languages. whether this is the right paradigm for you is 
 your first impression, but upon what problems you are trying to solve, and whom you communicate
 with when solving them.
 
-### 💅 style examples
+### 🌷 an introduction
 
-when implementing j, i began by studying the programming style of the interpreter fragment.
+the purpose of building j was not merely to implement an array language in Rust. it was important
+to me that i did not write this software in the idiomatic style enforced by `cargo fmt`.
+conciseness should not come from retroactive search-and-replace, but from an honest attempt at
+adopting and recreating the _mindset_ of people who write software like this.
 
-it was important to me that i did not write this software in the idiomatic style enforced by
-`cargo fmt`; the conciseness should not come from retroactivve search-and-replace, but from an
-honest attempt at adopting and recreating the mindset of the Incunabulum.
-
-let's read a few snippets from the Incunabulum, an open-source implementation of k, and from j.
+in order to get a concrete sense of what this looks like, let's begin by reading a few snippets
+from the Incunabulum, an open-source implementation of k, and from j.
 
 #### 📜 the incunabulum
 
@@ -146,26 +146,32 @@ I main()_(setbuf(stdout,0);/*pr("unit tests\n");*/C*e,*s=mm("t/t.k",&e);I n=0,f=
  W(s<e,C*u=strchr(s,10)+1;I r=t(s,u-s);n+=!!r;f+=r<0;s=u)P(f,pr("\nfail %d/%d\n",f,n);1)pr("\n");0)
 ```
 
+> ❗ **NB:** do not worry about understanding this snippet.
+
 consider the fact that this is technically the same language as more orthodox dialiects of C, such
-as K&R, GNU, or BSD. j follows this spirit, to investigate what "Whitney Rust" would _look_
-like, and to experience what writing software in this voice _feels_ like.
+as K&R, GNU, or BSD.
 
 #### 🐣 j
+
+j follows this spirit, in order to investigate whether "Whitney Rust" is possible, and to learn
+what writing software in this voice feels like.
 
 here is the core logic of the four monadic verbs `i.`, `$`, `#`, and `|:`:
 
 ```rust
 /**monadic verbs*/impl A{
+  pub fn m_same(self)->R<A>{Ok(self)}
   pub fn m_idot(self)->R<A>{let(a@A{m,n,..})=self;let gi=|i,j|a.get(i,j)?.try_into().map_err(E::from);
     if let(1,1)=(m,n){let(m,n)=(1,gi(1,1)?);let(mut o)=A::new(1,n)?;
-      for(j)in(1..=n){o.set(1,j,j.try_into()?)?;}Ok(unsafe{o.finish()})}
+      for(j)in(1..=n){o.set(1,j,(j-1).try_into()?)?;}Ok(unsafe{o.finish()})}
     else if let(1,2)=(m,n){let(m,n)=(gi(1,1)?,gi(1,2)?);
       let(mut v)=0_u32;let(f)=move |_,_|{let(v_o)=v;v+=1;Ok(v_o)};A::new(m,n)?.init_with(f)}
     else{bail!("i. {m}x{n} not supported")}}
   pub fn m_shape(self)->R<A>{let(A{m,n,..})=self;let(a):&[I]=&[m as I,n as I];A::try_from(a)}
   pub fn m_tally(self)->R<A>{let A{m,n,..}=self;let(i)=I::try_from(m*n)?;A::from_i(i)}
   pub fn m_trans(self)->R<A>{let(i@A{m:m_i,n:n_i,..})=self;let(m_o,n_o)=(n_i,m_i);
-    let(f)=|i_o,j_o|{i.get(j_o,i_o)};A::new(m_o,n_o)?.init_with(f)}}
+    let(f)=|i_o,j_o|{i.get(j_o,i_o)};A::new(m_o,n_o)?.init_with(f)}
+}
 ```
 
 ## ⛅ background
@@ -179,7 +185,7 @@ thus, many readers approach array languages with some preconceptions of what cod
 we as software engineers today have conservative ideas of what programming languages
 can look like, compared to the variety found in written languages around the world.
 
-#### ➰ compute a cumulative sum in imperative programming languages
+### ➰ compute a cumulative sum in imperative programming languages
 
 let's find the sum of integers `1..100` in a few programming languages.
 
@@ -229,12 +235,11 @@ for i in 1..=100 {
 println!("{sum}");
 ```
 
-these are strikingly similar, particularly when you consider that Julia was designed **TODO**
-years after C, or that sh is a command shell rather than a programming language.
-
-most of the differences between these different examples are syntactic minutia. some examples:
+these are strikingly similar! consider that Julia appeared roughly 40 years after C, or that the
+Bourne shell is a command-line interpreter rather than a programming language. despite that,
+most of the differences between these examples are syntactic minutia:
 * in C, we must declare the type of the variable, an `int`
-* in sh, we must perform our arithmetic inside of a subshell, using the `expr` builtin
+* in a shell script, we must perform our arithmetic inside of a subshell, using the `expr` builtin
 * in Julia, we must specify that our assignment refers to the global `sum` variable
 * in C and Rust, loops are wrapped within `{` and `}` curly braces; in Julia and sh, `end` and
 `done` keywords are used.
@@ -372,7 +377,7 @@ so, the expression above has the following structure:
 these programs share the same structure, save that `i.` is the verb for generating sequences,
 rather than K's `!`. importantly, we can see a shared syntactic lineage here.
 
-####   language categories
+###   language categories
 
 the united states government groups languages into categories from 1-5, ranking how difficult they
 are to learn. category 1 languages are considered "easy" to learn, while a category 5 language
@@ -408,8 +413,8 @@ let bytes = (await client.send(request)).into_body();
 ```
 
 many discussions about the validity of this approach have already been borne out at length, and
-i'll point to [THIS][TODO] excellent write-up about the benefits of postfix `await` if you are
-interested in reading further.
+i'll point to [this][ceej-postfix] excellent write-up about the benefits of postfix `await` if
+you are interested in reading further.
 
 one of the core points of debate when weighing out the tradeoffs of this choice was the concept of
 a "_strangeness budget_." the premise of a strangeness budget is the number of new concepts that
@@ -712,3 +717,4 @@ todo...
 [j-gerunds]: https://code.jsoftware.com/wiki/Vocabulary/GerundsAndAtomicRepresentation
 [j-getting-started]: https://code.jsoftware.com/wiki/Guides/Getting_Started
 [j-nuvoc]: https://code.jsoftware.com/wiki/NuVoc
+[ceej-postfix]: https://blog.ceejbot.com/posts/postfix-await/
