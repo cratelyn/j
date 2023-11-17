@@ -687,25 +687,54 @@ impl Array<MemoryUninit>{
 terse style did not prevent me from using familiar idioms. "_Whitney C_" may be a grand departure
 from other variants of C, but it _is_ still ultimately a dialect of C.
 
-### 🏠 brevity is an architectural principal
+## 🏠 brevity is an architectural principal
 
-brevity is a property that applies beyond syntax.
+a core lesson i learned by building j is that this is extensive pursuit of brevity is about much
+more than syntactic brevity for cosmetic reasons. this is a kind of brevity that is an
+architectural principal, and a mode of cognition.
 
-todo...
-* example of a pull request / commit in this project; adverb support
-* simple syntax contributed to simple workflows
-  * setting up a reference for coordinates? run `nvim src/a.rs`, `4z<Enter>`, `:split`, `:res 4`. one shell command, one navigation step, two commands.
-  * rerunning tests in an i3 window `fd . | entr -rc cargo test --message-format=short --quiet`
-* picking this project back up after long breaks was surprisingly easy. there wasn't much to read!
-* brevity allows readers to see parallels at a function/type/module level, rather than an expression level
+working like this had a perceptible impact on how i worked. it affected to tools i used, how i
+used them, and how i thought.
+
+**🔨 simple workflows**
+
+* when files are this short, you can just print them with `cat`. simple.
+* setting up a reference for coordinates?
+  * nvim +4 src/a.rs -c split -c res 4 (open the file at line 4, split the window in two, resize the top window to 4 lines)
+* rerunning tests in an i3 window `fd . | entr -rc cargo test --message-format=short --quiet`
+  * rust's inline unit tests allowed me to often work with an entire subsystem _and_ its test suite
+  on my screen at one time. this
+
+**🌲 seeing the forest**
+
+succinct code allowed me to see high-level patterns in my code. as an example, the `A` array type
+has two methods, `index` and `index_uc`, to convert 1-based `(i,j)` coordinates to the
+corresonding index of the raw allocated memory.
+
+`index` will check that the coordinates are in bounds. for performance reasons, the "_unchecked_"
+variant will elide this bounds check.
+
+look how clearly a succinct style highlights that difference:
+
+```rust
+impl A{
+  fn index   (&self,i:U,j:U)->R<U>{self.oob(i,j)?;let A{m,n,..}=*self;let(i,j)=(i-1,j-1);Ok((i*n)+j)}
+  fn index_uc(&self,i:U,j:U)->R<U>{               let A{m,n,..}=*self;let(i,j)=(i-1,j-1);Ok((i*n)+j)}
+}
+```
+
+brevity allows readers to see parallels at a function/type/module level, rather than an expression level
   * making use of _horizontal_ space in code formatting! c programmers commonly do this too :) determining when felt just the same as deciding when to place empty-lines in "traditional" code.
   * whitespace alignment is common in many styles. terse code allows whitespace alignment to highlight common structures, at a higher abstraction
-  * ^^^ consider this snippet from the array access logic:
-```rust
-    pub fn index(&self,i:U,j:U)->R<U>   {self.oob(i,j)?;let A{m,n,..}=*self;let(i,j)=(i-1,j-1);Ok((i*n)+j)}
-    pub fn index_uc(&self,i:U,j:U)->R<U>{               let A{m,n,..}=*self;let(i,j)=(i-1,j-1);Ok((i*n)+j)}
-```
-  * the difference between the "checked" and "unchecked" methods is immediately visible.
+
+
+**🔎 simple reviews**
+
+**todo...**
+
+* example of a pull request / commit in this project; adverb support
+* simple syntax contributed to simple workflows
+* picking this project back up after long breaks was surprisingly easy. there wasn't much to read!
 
 * `--word-diff-regex=.` for character diffs in git
 
