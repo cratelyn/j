@@ -728,7 +728,7 @@ brevity allows readers to see parallels at a function/type/module level, rather 
   * whitespace alignment is common in many styles. terse code allows whitespace alignment to highlight common structures, at a higher abstraction
 
 
-**🔎 simple reviews**
+**🔎 brief reviews**
 
 cratelyn/j#3 is an example of a very simple bugfix, fixing an off-by-one error for the `i.` verb.
 
@@ -736,7 +736,13 @@ cratelyn/j#3 is an example of a very simple bugfix, fixing an off-by-one error f
 diff output. so `git show --word-diff-regex=.` is a way to see a per-character diff. looking at
 that commit in this manner, we see...
 
-```diff
+![`; git show --word-diff-regex=. --oneline fb72462
+fb72462 (origin/idot-should-start-from-zero, idot-should-start-from-zero) 🐛 bug: i. sequences should start from zero
+diff --git a/src/a.rs b/src/a.rs
+index 38f1d7b..f535c2c 100644
+--- a/src/a.rs
++++ b/src/a.rs
+@@ -125,7 +125,7 @@ use super::*; use std::marker::PhantomData as PD;
 /**monadic verbs*/impl A{
   pub fn m_idot(self)->R<A>{let(a@A{m,n,..})=self;let gi=|i,j|a.get(i,j)?.try_into().map_err(E::from);
     if let(1,1)=(m,n){let(m,n)=(1,gi(1,1)?);let(mut o)=A::new(1,n)?;
@@ -744,18 +750,25 @@ that commit in this manner, we see...
     else if let(1,2)=(m,n){let(m,n)=(gi(1,1)?,gi(1,2)?);
       let(mut v)=0_u32;let(f)=move |_,_|{let(v_o)=v;v+=1;Ok(v_o)};A::new(m,n)?.init_with(f)}
     else{bail!("i. {m}x{n} not supported")}}
-```
+diff --git a/tests/t.rs b/tests/t.rs
+index bb3b691..fa86b41 100644
+--- a/tests/t.rs
++++ b/tests/t.rs
+@@ -20,7 +20,7 @@
+    #[test]fn $f()->R<()>{let(a@A{m:1,n:1,..})=eval_s($i)? else{bail!("bad dims")};eq!(a.as_slice()?,&[$o]);ok!()}}}
+  t!(tally_scalar,"# 1",1);t!(tally_1x3,"# 1 2 3",3);t!(tally_3x3,"# i. 3 3",9);
+} #[cfg(test)]mod idot{use super::*;
+  #[test]fn idot_3()->R<()>{let(a)=eval_s("i. 3")?;eq!(a.m,1);eq!(a.n,3);eq!(a.as_slice()?,&[{+0,+}1,2[-,3-]]);ok!()}
+  #[test]fn idot_2_3()->R<()>{let(a)=eval_s("i. 2 3")?;eq!(a.m,2);eq!(a.n,3);let o:&[&[I]]=&[&[0,1,2],&[3,4,5]];
+    eq!(a.into_matrix()?,o);eq!(a,o);ok!()}
+  #[test]fn idot_3_2()->R<()>{let(a)=eval_s("i. 3 2")?;eq!(a.m,3);eq!(a.n,2);let o:&[&[I]]=&[&[0,1],&[2,3],&[4,5]];`](./3-diff.png)
 
-you can run `git show fb72462 --oneline --word-diff-regex=.` if you would like to see this in a
-local clone of this repository.
+> ❗ you can run `git show fb72462 --oneline --word-diff-regex=.` if you would like to see this in
+> a local clone of this repository.
 
 **todo...**
 
-* example of a pull request / commit in this project; adverb support
-* simple syntax contributed to simple workflows
 * picking this project back up after long breaks was surprisingly easy. there wasn't much to read!
-
-* `--word-diff-regex=.` for character diffs in git
 
 * the rust borrow checker has a tendency to nudge you away from design patterns that are not memory-safe.
   similarly, a terse style naturally enforces good control-flow patterns. spaghetti code is much
