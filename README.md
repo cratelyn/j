@@ -730,6 +730,25 @@ brevity allows readers to see parallels at a function/type/module level, rather 
 
 **🔎 simple reviews**
 
+cratelyn/j#3 is an example of a very simple bugfix, fixing an off-by-one error for the `i.` verb.
+
+`git show` has an option `--word-diff-regex` that can be used to control what a "word" is in the
+diff output. so `git show --word-diff-regex=.` is a way to see a per-character diff. looking at
+that commit in this manner, we see...
+
+```diff
+/**monadic verbs*/impl A{
+  pub fn m_idot(self)->R<A>{let(a@A{m,n,..})=self;let gi=|i,j|a.get(i,j)?.try_into().map_err(E::from);
+    if let(1,1)=(m,n){let(m,n)=(1,gi(1,1)?);let(mut o)=A::new(1,n)?;
+      for(j)in(1..=n){o.set(1,j,{+(+}j{+-1)+}.try_into()?)?;}Ok(unsafe{o.finish()})}
+    else if let(1,2)=(m,n){let(m,n)=(gi(1,1)?,gi(1,2)?);
+      let(mut v)=0_u32;let(f)=move |_,_|{let(v_o)=v;v+=1;Ok(v_o)};A::new(m,n)?.init_with(f)}
+    else{bail!("i. {m}x{n} not supported")}}
+```
+
+you can run `git show fb72462 --oneline --word-diff-regex=.` if you would like to see this in a
+local clone of this repository.
+
 **todo...**
 
 * example of a pull request / commit in this project; adverb support
