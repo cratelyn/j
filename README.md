@@ -690,29 +690,53 @@ from other variants of C, but it _is_ still ultimately a dialect of C.
 ## 🏠 brevity is an architectural principal
 
 a core lesson i learned by building j is that this is extensive pursuit of brevity is about much
-more than syntactic brevity for cosmetic reasons. this is a kind of brevity that is an
+more than syntactic brevity for cosmetic reasons. this is a kind of brevity that is also an
 architectural principal, and a mode of cognition.
 
-working like this had a perceptible impact on how i worked. it affected to tools i used, how i
+working like this had a perceptible impact on how i worked. it affected the tools i used, how i
 used them, and how i thought.
 
 **🔨 simple workflows**
 
-* when files are this short, you can just print them with `cat`. simple.
-* setting up a reference for coordinates?
-  * nvim +4 src/a.rs -c split -c res 4 (open the file at line 4, split the window in two, resize the top window to 4 lines)
-* rerunning tests in an i3 window `fd . | entr -rc cargo test --message-format=short --quiet`
-  * rust's inline unit tests allowed me to often work with an entire subsystem _and_ its test suite
-  on my screen at one time. this
+working with succinct code meant that i could rely on succinct workflows. when files are this
+short, you can print them with `cat`. remarkably simple. let's look at array indexing as another
+example.
+
+m×n arrays `A` have m rows and n columns, and are indexed with 1-based coordinates `(i,j)`. the
+top-left corner serves as the origin `(1,1)`. there is a documentation comment in `src/a.rs` on
+line 4 that shows this simple diagram:
+
+```
+[a_11, a_12, ... a_1n]
+[a_21, a_22, ... a_2n]
+[...., ...., ... ....]
+[a_m1, a_m2, ... a_mn]
+```
+
+when implementing new features, _especially_ when interacting with raw memory, i found that it was
+tremendously helpful to open this comment in a split window within my text editor, neovim.
+
+neovim have a `-c` option that may be used to run commands after opening a file. `+n` may be used
+to open a file at a particular line number. thus, nvim `+4 src/a.rs -c split -c res 4` would open
+the core `a.rs` array logic, with a split pane showing me this reference for my memory indexing
+strategy.
+
+rust's inline unit tests allowed me to often work with an entire subsystem _and_ its
+respective test suite on my screen at the same time. it is hard to overstate how novel and exciting
+this felt.
 
 **🌲 seeing the forest**
 
-succinct code allowed me to see high-level patterns in my code. as an example, the `A` array type
-has two methods, `index` and `index_uc`, to convert 1-based `(i,j)` coordinates to the
-corresonding index of the raw allocated memory.
+i found that brevity changed the economy of space in my project away from _lines_ of code, into a
+two-dimensional economy of characters. while this use of horizontal alignment echoed what i have
+personally seen in plenty of C codebases, within succinct code i found that i was able to highlight
+commonalities and differences in higher-level parts of my software architecture: control flow,
+functions, etc.
 
-`index` will check that the coordinates are in bounds. for performance reasons, the "_unchecked_"
-variant will elide this bounds check.
+as an example, the `A` array type has two methods, `index` and `index_uc`, to convert 1-based
+`(i,j)` coordinates to the corresonding index of the raw allocated memory. `index` will check that
+the coordinates are in bounds. for performance reasons, the "_unchecked_" variant will elide this
+bounds check.
 
 look how clearly a succinct style highlights that difference:
 
@@ -722,11 +746,6 @@ impl A{
   fn index_uc(&self,i:U,j:U)->R<U>{               let A{m,n,..}=*self;let(i,j)=(i-1,j-1);Ok((i*n)+j)}
 }
 ```
-
-brevity allows readers to see parallels at a function/type/module level, rather than an expression level
-  * making use of _horizontal_ space in code formatting! c programmers commonly do this too :) determining when felt just the same as deciding when to place empty-lines in "traditional" code.
-  * whitespace alignment is common in many styles. terse code allows whitespace alignment to highlight common structures, at a higher abstraction
-
 
 **🔎 brief reviews**
 
@@ -766,14 +785,16 @@ index bb3b691..fa86b41 100644
 > ❗ you can run `git show fb72462 --oneline --word-diff-regex=.` if you would like to see this in
 > a local clone of this repository.
 
-**todo...**
+ultimately though, git was fundamentally showing me "context" that assumed we were still thinking
+of code in terms of "lines".
 
-* picking this project back up after long breaks was surprisingly easy. there wasn't much to read!
+the overall diff, when shown with `--oneline` and `--word-diff-regex=.`, is 1442 characters.
+24 characters are needed to show the diff (_including `{+` and `+}` markers_), and 16 characters
+for the names of the files affected.
 
-* the rust borrow checker has a tendency to nudge you away from design patterns that are not memory-safe.
-  similarly, a terse style naturally enforces good control-flow patterns. spaghetti code is much
-  easier to spot, puts an upper-bound on loop/conditional nesting
-* you don't make copy paste errors if it is easier to rewrite it ("idioms over libraries" APL philosophy)
+this is of course, napkin math, but that means that more than 97% of the diff is _context._
+
+## 💭 code shouldn't just be text
 
 ---
 
