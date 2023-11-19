@@ -30,6 +30,7 @@ implemented. a small number of verbs and adverbs are provided. variables may be 
 * `$` "shape" returns a value containing the dimensions of its argument
 * `[` "same" returns the given value
 * `]` "same" returns the given value
+* `>:` increments the given value
 
 **dyadic verbs**
 * `+` returns the sum of its two arguments
@@ -71,28 +72,6 @@ the code within this project is structured like so:
 the rest of this document is an essay discussing the experience of writing software, using Rust,
 in a voice inspired by Arthur Whitney's style of C.
 
-### 💭 on brevity; readability depends on who is reading
-
-array programming languages are somewhat notorious for their terseness. this terseness often
-extends to the underlying implementation of these languages as well. before we continue any
-further, i'd like to cite a snippet from `@xpqz`'s excellent introduction to the K programming
-language:
-
-> K, like its Iversonian siblings APL and J, values conciseness, or perhaps we should say
-> terseness, of representation and speed of execution.
->
-> [A]ccusations of “unreadable”, “write-only” and “impossible to learn” are leveled at all
-> Iversonian languages, k included. [..] **Readability is a property of the reader, not the
-> language.**
-
-- [_"Why k?"_][why-k] _(emphasis added)_
-
-to restate this point bluntly, we will not spend time in this essay humoring questions about the
-aesthetic or practical validity of these languages. real people wake up, and solve real problems
-with array programming languages. whether this is the right paradigm for you is not dependent on
-your first impression, but upon what problems you are trying to solve, and whom you communicate
-with when solving them.
-
 ### 🌷 an introduction
 
 the purpose of building j was not merely to implement an array language in Rust. it was important
@@ -105,13 +84,7 @@ from the Incunabulum, an open-source implementation of k, and from j.
 
 #### 📜 the incunabulum
 
-the `main` function in the aforementioned "Incunabulum" fragment is defined in this line:
-
-```c
-main(){C s[99];while(gets(s))pr(ex(wd(s)));}
-```
-
-more conventional formatting of this function would look something vaguely like this:
+conventional formatting of the Incunabulum's `main` function would look something like this:
 
 ```c
 int main()
@@ -124,6 +97,15 @@ int main()
 		print(a);
     }
 }
+```
+
+for C programmers, this should look like a familiar structure for the main event loop of an
+interpreter; we read an input, parse it, and then execute that statement.
+
+in the Incunabulum, Arthur Whitney wrote that loop in this single line:
+
+```c
+main(){C s[99];while(gets(s))pr(ex(wd(s)));}
 ```
 
 #### 🔬 ngn k
@@ -148,40 +130,81 @@ I main()_(setbuf(stdout,0);/*pr("unit tests\n");*/C*e,*s=mm("t/t.k",&e);I n=0,f=
 
 > ❗ **NB:** do not worry about understanding this snippet.
 
-consider the fact that this is technically the same language as more orthodox dialiects of C, such
-as K&R, GNU, or BSD.
+i had always been fascinated by the fact that this is technically the same language as more
+orthodox dialiects of C, such as K&R, GNU, or BSD.
+
+j follows this spirit and style, in order to investigate whether "Whitney Rust" is possible, what
+it might teach us about Rust as a programming language, and to learn what writing software in this
+voice feels like, and why people do it.
 
 #### 🐣 j
 
-j follows this spirit, in order to investigate whether "Whitney Rust" is possible, and to learn
-what writing software in this voice feels like.
-
-here is the core logic of the four monadic verbs `i.`, `$`, `#`, and `|:`:
+the core of the four dyadic verbs `[`, `]`, `+`, and `*` is shown below. the definitions of the `A`
+array type and the `D` dyadic verb enum are included for reference.
 
 ```rust
-/**monadic verbs*/impl A{
-  pub fn m_same(self)->R<A>{Ok(self)}
-  pub fn m_idot(self)->R<A>{let(a@A{m,n,..})=self;let gi=|i,j|a.get(i,j)?.try_into().map_err(E::from);
-    if let(1,1)=(m,n){let(m,n)=(1,gi(1,1)?);let(mut o)=A::new(1,n)?;
-      for(j)in(1..=n){o.set(1,j,(j-1).try_into()?)?;}Ok(unsafe{o.finish()})}
-    else if let(1,2)=(m,n){let(m,n)=(gi(1,1)?,gi(1,2)?);
-      let(mut v)=0_u32;let(f)=move |_,_|{let(v_o)=v;v+=1;Ok(v_o)};A::new(m,n)?.init_with(f)}
-    else{bail!("i. {m}x{n} not supported")}}
-  pub fn m_shape(self)->R<A>{let(A{m,n,..})=self;let(a):&[I]=&[m as I,n as I];A::try_from(a)}
-  pub fn m_tally(self)->R<A>{let A{m,n,..}=self;let(i)=I::try_from(m*n)?;A::from_i(i)}
-  pub fn m_trans(self)->R<A>{let(i@A{m:m_i,n:n_i,..})=self;let(m_o,n_o)=(n_i,m_i);
-    let(f)=|i_o,j_o|{i.get(j_o,i_o)};A::new(m_o,n_o)?.init_with(f)}
+pub enum D        {Plus,Mul,Left,Right}
+pub struct A<X=MI>{/**columns*/ pub m:U,      /**rows*/  pub n:U,
+                   /**data*/        d:*mut u8,/**layout*/l:L,
+                   /**memory state*/i:PD<X>,                    }
+/**dyadic verbs*/impl D{
+  /*return dyad function**/ pub fn f(&self)->fn(I,I)->I{use D::*;
+    match(self){Plus=>D::add, Mul=>D::mul, Left=>D::left, Right=>D::right} }
+  /*add two numbers*/fn add (x:I,y:I)->I{x+y} /*multiply two numbers*/fn mul  (x:I,y:I)->I{x*y}
+  /*left           */fn left(x:I,y:I)->I{x  } /*right               */fn right(x:I,y:I)->I{  y}
+} impl A{
+  pub fn d_left (self,r:A)->R<A>{Ok(self)                }
+  pub fn d_right(self,r:A)->R<A>{Ok(r)                   }
+  pub fn d_plus(self,r:A) ->R<A>{A::d_do(self,r,D::add)}
+  pub fn d_mul (self,r:A) ->R<A>{A::d_do(self,r,D::mul)}
+  pub fn d_do(l@A{m:ml,n:nl,..}:A,r@A{m:mr,n:nr,..}:A,f:impl Fn(I,I)->I)->R<A<MI>>{
+            let(li,ri)=(l.as_i().ok(),r.as_i().ok());let(ls,rs)=(l.as_slice().ok(),r.as_slice().ok());
+         if let(Some(li),Some(ri))=(li,ri){r!(A::from_i(f(li,ri)))}                                                     // two scalars
+    else if let(_,Some(s),None,a@A{m,n,..})|(a@A{m,n,..},None,Some(s),_)=(&l,li,ri,&r)                                  // scalar and array
+      {let(f)=|i,j|{Ok(f(a.get(i,j)?,s))};r!(A::new(*m,*n)?.init_with(f))}
+    else if let(_,Some(s),None,a@A{m,n,..})|(a@A{m,n,..},None,Some(s),_)=(&l,ls,rs,&r)                                  // slice and array
+      {if(s.len()==*m){let(f)=|i,j|{let(x)=a.get(i,j)?;let(y)=(s[i-1]);Ok(f(x,y))};r!(A::new(*m,*n)?.init_with(f))}}
+    else if (ml==mr)&&(nl==nr){let(m,n)=(ml,nl);r!(A::new(m,n)?.init_with(                                              // matching arrays
+      |i,j|{let(l,r)=(l.get(i,j)?,r.get(i,j)?);Ok(f(l,r))}))}
+    else if (ml==nr)&&(nl==mr) /*NB: inherit the dimensions of the right-hand operand.*/                                // rotation
+      {let(f)=|i,j|{let(x)=l.get(j,i)?;let(y)=r.get(i,j)?;Ok(f(x,y))};r!(A::new(mr,nr)?.init_with(f))}
+    bail!("length error");
+  }
 }
 ```
 
-## ⛅ background
+(_NB: we will talk more about the shorthand type aliases and macros in scope later in this essay_)
+
+## 💭 on brevity; readability depends on who is reading
+
+thus, array programming languages are somewhat notorious for their terseness. this terseness often
+extends to the underlying implementation of these languages as well. before we continue any
+further, i'd like to cite a snippet from `@xpqz`'s excellent introduction to the K programming
+language:
+
+> K, like its Iversonian siblings APL and J, values conciseness, or perhaps we should say
+> terseness, of representation and speed of execution.
+>
+> [A]ccusations of “unreadable”, “write-only” and “impossible to learn” are leveled at all
+> Iversonian languages, k included. [..] **Readability is a property of the reader, not the
+> language.**
+
+- [_"Why k?"_][why-k] _(emphasis added)_
+
+to restate this point bluntly, we will not spend time in this essay humoring questions about the
+aesthetic or practical validity of these languages. real people wake up, and solve real problems
+with array programming languages. whether this is the right paradigm for you is not dependent on
+your first impression, but upon what problems you are trying to solve, and whom you communicate
+with when solving them.
+
+## 🌈 how broad is our imagination?
 
 programming languages used in industry today are descendents of a few shared ancestors, most
 commonly C. exceptions may draw from other languages such as ML, Lisp, Smalltalk, or Fortran, but
 even these all share some unspoken consensus regarding whitespace, loop indentation, symbol names,
 and the like.
 
-thus, many readers approach array languages with some preconceptions of what code should look like.
+many readers approach array languages with some preconceptions of what code should look like.
 we as software engineers today have conservative ideas of what programming languages
 can look like, compared to the variety found in written languages around the world.
 
@@ -189,7 +212,7 @@ can look like, compared to the variety found in written languages around the wor
 
 let's find the sum of integers `1..100` in a few programming languages.
 
-source for these can all be found in the `sums/` directory of this repository. we will exclude
+**note** source for these can all be found in the `sums/` directory of this repository. we will exclude
 unrelated syntactic overhead such as defining a `main` function, in order to focus on the core
 logic of computing this sum.
 
@@ -263,10 +286,8 @@ at its most explicit, this would look something like the following Rust program:
 
 ```rust
 fn main() {
-    println!(
-        "{}",
-        (1..=100).fold(0, |cum, cur| cum + cur)
-    );
+    let sum = (1..=100).fold(0, std::ops::Add::add);
+    println!("{sum}");
 }
 ```
 
@@ -274,18 +295,10 @@ or, using the `Iterator::sum` helper:
 
 ```rust
 fn main() {
-    println!("{}", (1..=100).sum::<u32>());
+    let sum: u32 = (1..=100).sum();
+    println!("{sum}");
 }
 ```
-
-in R, we can find a rather similarly shaped program:
-
-```r
-sum(seq(1,100))
-```
-
-again, there's a loose similarity in approach here. we generate a sequence (the integers between 1
-and 100), and then we perform an action upon it (add them together).
 
 **⤆ a refresher on function composition: you are used to reading from right to left**
 
@@ -313,8 +326,10 @@ sum(seq(100))
 100 |> seq |> sum
 ```
 
-neither of these approaches are incorrect, but it is worth pointing out that many people are
-already intuitively familiar with the experience of reading expressions from right to left!
+neither of these approaches are incorrect, but it is worth pointing out that many programmers are
+already quite familiar with the experience of reading expressions from right to left! additionally,
+many are also familiar with the idea of programming _tacitly,_ wherein variable names are not
+assigned to intermediate values (_the `i` in the for-loops above_).
 
 #### 󰘨 find a cumulative sum in an array language
 
@@ -331,6 +346,8 @@ here are two solutions to the same problem in J, and its related cousin K.
 ```
 +/1+i.100
 ```
+
+_(NB: the "increment" operator is implemented later in this essay.)_
 
 **🎳 breaking it down**
 
@@ -354,9 +371,11 @@ same concept holds roughly true for J and K's adverbs.
 adverbs and [gerunds][j-gerunds] are very similar to higher-order functions. a higher-order
 function is a function that either accepts as an argument, or returns, another function. these
 constructs provide a way for programmers to abbreviate or abstract over common control flow
-patterns. J refers to the `/` adverb in this statement as "insert". this operator places the
-dyadic `+` operator between the elements of its argument. thus, `+ / 1 2 3` is equivalent to
-`1+2+3`.
+patterns. J refers to the `/` adverb in this statement as "insert".
+
+the "insert" adverb places the provided dyadic (`+`) operator between the elements of its argument.
+thus, `+ / 1 2 3` is equivalent to `1+2+3`. notice that this is, syntax notwithstanding, the same
+idea as saying `fold()`
 
 so, the expression above has the following structure:
 
@@ -391,12 +410,17 @@ but a language like Cantonese might include novel concepts such as semantically 
 that would trip up such a student. in much the same way, J would be rather easy for a K programmer
 to learn and vice-versa.
 
+in truth, i think that the difficulty of learning array languages is overestimated. while this may
+seem to stem from incongruities in notation, i think this reputation is ultimately about larger
+differences in people's philosophies and preconceptions about human-computer interfaces.
+
+so, why _do_ so many programming languages look so similar?
+
 #### 🤨 "strangeness budget"
 
-if we look back to programming languages, we can find a fantastic example of this phenomenon and
-the preconceptions many programmers bring with them quietly playing out in the the development of
-Rust's syntax for asynchrony. to briefly summarize, Rust opted to use "postfix" notation when
-awaiting a `Future`. this results in code that looks like:
+we can find an illustrative story in the development of Rust's syntax for asynchrony. to briefly
+summarize, Rust opted to use "postfix" notation when awaiting a `Future`. this results in code
+that looks like:
 
 ```rust
 let bytes = client
@@ -415,8 +439,8 @@ let bytes = (await client.send(request)).into_body();
 many discussions about the validity of this approach have already been borne out at
 [great][rust-57640] [length][rust-50547]. i'll point to [this][ceej-postfix] excellent write-up
 about the benefits of postfix `await` if you are interested in reading further. suffice to say,
-this decision was controversial, and it strayed outside of what some people considered reasonable
-syntax for asynchrony.
+this decision was controversial, because it strayed outside of what some people considered
+reasonable syntax for asynchrony.
 
 Steve Klabnik [wrote][klabnik-budget] about this phenomenon:
 
@@ -428,20 +452,25 @@ Steve Klabnik [wrote][klabnik-budget] about this phenomenon:
 > programmers, is currently using a curly brace language. Instead, we spend this strangeness
 > budget on our major, core feature: ownership and borrowing.
 
-the implicit part of a strangeness budget, as with the idea of "categories" for human languages,
-is who your students are.
+in other words, in order to define and manage a strangeness budget, as with the idea of
+"categories" for human languages, you must identify who your prospective students are. as Steve
+noted, it was pragmatic and reasonable for Rust to focus on this demographic because many of its
+early adopters would be C or C++ programmers.
 
-our summing exercise above illustrated that it is both pragmatic and reasonable to frame this
-budget in terms of how far the language strays from "_C-ish_", but that such a budget could exist
-in the first place is illustrative of how relatively homogenous the syntactic structure of
-most programming languages are today.
+our summing exercise above illustrated how similar different programming languages' looping
+constructs are. ultimately, each new programming language is incentivized _not_ to challenge
+people's notions of loops.
 
 Aaron Hsu has remarked in his [talks][hsu-apl] about APL that the people who have the most
-trouble learning languages like APL are often _computer science students_.
+trouble learning languages like APL are often _computer science students_. we learn more than
+syntax or grammer when studying computer science: for better and for worse, we also internalize
+conventions of _thought._
 
 readability is a property of the reader, indeed!
 
 ## 🍄 my experience
+
+so, you ask, how was it?
 
 hopefully at this point i've convinced you that this is an internally consistent programming
 paradigm, even if it does not seem like your personal cup of tea. i'll be honest, at the outset
@@ -557,9 +586,9 @@ LISP programmers have a mantra that code is data, and data is code; indeed, Kona
 that LISP was an important influence on the K language. along the same lines, this style puts a
 heavy emphasis on metaprogramming facilities. code is also syntax, and syntax is code.
 
-**brevity aids the construction of a domain-specific language (DSL) in which a piece of software
-can then be written.** this style of hyper-succint code is ultimately a dialect to be embedded
-_within_ a "host" language.
+**brevity mandates the construction of a domain-specific language (DSL) in which a piece of
+software can then be written.** this style of hyper-succint code is ultimately a dialect to be
+embedded _within_ a "host" language.
 
 ### 🦀 brevity is not a mutually exclusive property
 
@@ -573,9 +602,34 @@ of writing software in Rust.
 
 **🌳 abstract syntax tree**
 
-as a straightforward example, this snippet of `src/r.rs` shows the definition of j's AST node.
-`D` and `M` represent dyadic and monadic verbs: `+`, `*`, `i.`, and so forth. `N` represents the
-abstract syntax tree representation of a parsed expression.
+as a straightforward example, this snippet of `src/r.rs` shows the definition of j's abstract
+syntax tree (AST). an AST is the structured representation of statements in a language, which
+most compilers and interpreters implement in some form or another.
+
+`SY` is a newtype wrapper around a `String`. they're tremendously useful. see
+["New Type Idiom"][api-guidelines-newtype] in the Rust API guidelines for more information on this
+pattern.
+the `D` and `M` structures represent dyadic and monadic verbs: `+`, `*`, `i.`, and so forth.
+the `Yd` and `Ym` are structures are monadic and dyadic adverbs, `/` and `\`.
+
+`N` is a recursive structure that uses these to represent a statement in j.
+
+```rust
+/**symbol            */pub struct SY(S);
+/**dyadic verb       */pub enum D {Plus,Mul,  Left, Right             }
+/**monadic verb      */pub enum M {Idot,Shape,Tally,Transpose,Same,Inc}
+/**dyadic adverb     */pub enum Yd{/**dyadic `/` */      Table ,
+                                   /**dyadic `\` */      Infix }
+/**monadic adverb    */pub enum Ym{/**monadic `/`*/      Insert,
+                                   /**monadic `\`*/      Prefix}
+/**ast node          */pub enum N {/**array literal*/    A{a:A},
+                                   /**dyadic verb*/      D{d:D,l:B<N>,r:B<N>},
+                                   /**monadic verb*/     M{m:M,o:B<N>},
+                                   /**dyadic adverb*/    Yd{yd:Yd,d:D,l:B<N>,r:B<N>},
+                                   /**monadic adverb*/   Ym{ym:Ym,d:D,o:B<N>},
+                                   /**symbol*/           S{sy:SY},
+                                   /**symbol assignment*/E{sy:SY,e:B<N>}}
+```
 
 while the monadic and dyadic verbs are simple enumerations, notice that the the `N` node contains
 heterogenous payloads for each variant. outlining the benefits of pattern matching and algebraic
@@ -584,22 +638,11 @@ invalid fields from being accessed or written to. interacting with the `l` and `
 cause a compilation failure, _unless_ we are within a block of code that has properly matched
 against an `A::N` value.
 
-```rust
-// src/r.rs
-/**dyadic verb       */ #[derive(DBG,PE,PO)] pub enum D {Plus,Mul}
-/**monadic verb      */ #[derive(DBG,PE,PO)] pub enum M {Idot,Shape,Tally,Transpose}
-/**ast node          */                      pub enum N {/**array literal*/    A{a:A},
-                                                         /**dyadic verb*/      D{d:D,l:B<N>,r:B<N>},
-                                                         /**monadic verb*/     M{m:M,o:B<N>},
-                                                         /**symbol*/           S{sy:SY},
-                                                         /**symbol assignment*/V{sy:SY,e:B<N>}}
-```
-
 **🔐 interfaces with guardrails**
 
-for example, these abbreviated snippets of `src/a.rs`. first, we define a collection of "marker"
+here are some abbreviated snippets of `src/a.rs`. first, we define a collection of "marker"
 types, to indicate whether the memory of an array has been initialized yet. this uses a "sealed"
-trait; see the [API Guidelines][api-guidelines] for more information on this pattern.
+trait; see the [API Guidelines][api-guidelines-futureproof] for more information on this pattern.
 
 ```rust
 // src/a.rs
@@ -685,7 +728,8 @@ impl Array<MemoryUninit>{
 
 **these two snippets are not any mechanically different!** it bears consideration that this
 terse style did not prevent me from using familiar idioms. "_Whitney C_" may be a grand departure
-from other variants of C, but it _is_ still ultimately a dialect of C.
+from other variants of C, but it _is_ still ultimately a dialect of C. "_Whitney Rust_" is also,
+at the end of the day, a dialect of Rust.
 
 ## 🏠 brevity is an architectural principal
 
@@ -749,11 +793,26 @@ impl A{
 
 **🔎 brief reviews**
 
-cratelyn/j#3 is an example of a very simple bugfix, fixing an off-by-one error for the `i.` verb.
+cratelyn/j#10 introduces a new monadic verb, `>:`, to increment its given noun.
 
 `git show` has an option `--word-diff-regex` that can be used to control what a "word" is in the
-diff output. so `git show --word-diff-regex=.` is a way to see a per-character diff. looking at
-that commit in this manner, we see...
+diff output. so `git show --word-diff-regex=.` is a way to see a per-character diff. using this,
+and the `-w --ignore-all-space` flag to ignore whitespace changes, this PR fits in one screen:
+
+![`62edb1f8061cdcf859f9335e13fb6c104718a4e5`](./10-diff.png)
+
+> ❗ you can run `git show 62edb1f --ignore-all-space --word-diff-regex=.` if you would like to
+> see this in a local clone of this repository.
+
+you might naturally as a reviewer take some time to read through this change, and decide whether
+or not it looks good to you. this style does not mean that there is somehow _less code to review._
+it does mean however, that you can see all of these changes at once.
+
+**💔 tooling incongruities**
+
+cratelyn/j#3 is an example of a very simple bugfix, fixing an off-by-one error for the `i.` verb.
+it replaces a `j` with a `(j-1)` in a particular expression. here is the diff, again using
+`--word-diff-regex=.`:
 
 ![`; git show --word-diff-regex=. --oneline fb72462
 fb72462 (origin/idot-should-start-from-zero, idot-should-start-from-zero) 🐛 bug: i. sequences should start from zero
@@ -785,22 +844,27 @@ index bb3b691..fa86b41 100644
 > ❗ you can run `git show fb72462 --oneline --word-diff-regex=.` if you would like to see this in
 > a local clone of this repository.
 
-ultimately though, git was fundamentally showing me "context" that assumed we were still thinking
-of code in terms of "lines".
+this diff, when shown with `--oneline` and `--word-diff-regex=.`, is 1442 characters.
+only 24 characters are the changes themselves (_including `{+` and `+}` markers_). only 16
+characters would be needed to print the names of the files shown.
 
-the overall diff, when shown with `--oneline` and `--word-diff-regex=.`, is 1442 characters.
-24 characters are needed to show the diff (_including `{+` and `+}` markers_), and 16 characters
-for the names of the files affected.
+this is of course, napkin math, but that means that more than 97% of the diff is _context._ the
+homogeneity of so many programming languages in industry today doesn't just affect the way we
+write code. these preconceptions become assumptions that are baked into the tools we use.
+thus, git is showing me "context" that presumes we are measuring of code in terms of "lines".
 
-this is of course, napkin math, but that means that more than 97% of the diff is _context._
+## 🖤 conclusion
 
-## 💭 code shouldn't just be text
+overall, i enjoyed working in this style. it provided me with a fresh perspective about how i
+use the computer, what language can look like, and how notation affects the way we think.
+if you have ever been curious about array programming languages, i recommend you give them a try.
 
 ---
 
 ### 🔗 works cited
 
 * ["Future Proofing"](https://rust-lang.github.io/api-guidelines/future-proofing.html)
+* ["New Type Idiom"](https://doc.rust-lang.org/rust-by-example/generics/new_types.html)
 * ["Incunabulum"](https://code.jsoftware.com/wiki/Essays/Incunabulum)
 * ["J: Gerunds And Atomic Representation"](https://code.jsoftware.com/wiki/Vocabulary/GerundsAndAtomicRepresentation)
 * ["J: Getting Started"](https://code.jsoftware.com/wiki/Guides/Getting_Started)
@@ -813,7 +877,8 @@ this is of course, napkin math, but that means that more than 97% of the diff is
 * https://github.com/rust-lang/rust/issues/50547
 * ["Does APL Need A Type System?"](https://www.youtube.com/watch?v=z8MVKianh54)
 
-[api-guidelines]: https://rust-lang.github.io/api-guidelines/future-proofing.html
+[api-guidelines-futureproof]: https://rust-lang.github.io/api-guidelines/future-proofing.html
+[api-guidelines-newtype]: https://doc.rust-lang.org/rust-by-example/generics/new_types.html
 [incunabulum]: https://code.jsoftware.com/wiki/Essays/Incunabulum
 [j-gerunds]: https://code.jsoftware.com/wiki/Vocabulary/GerundsAndAtomicRepresentation
 [j-getting-started]: https://code.jsoftware.com/wiki/Guides/Getting_Started
