@@ -9,8 +9,8 @@ fn eval_(ast:B<N>,st:&mut ST)->R<O<A>>{use{M::*,D::*};
     Ok(None)=>Err(err!("expression did not result in a value"))}};
   match *ast{
   N::A{a}    =>Ok(a),
-  N::M{m,o}  =>{let(a)=rec(o)?;            match m{Idot=>a.m_idot(),  Shape=>a.m_shape(), Same=>a.m_same(),
-                                                   Tally=>a.m_tally(),Transpose=>a.m_trans()}}
+  N::M{m,o}  =>{let(a)=rec(o)?;            match m{Idot=>a.m_idot(),  Shape=>a.m_shape(),     Same=>a.m_same(),
+                                                   Tally=>a.m_tally(),Transpose=>a.m_trans(), Inc=>a.m_inc()}}
   N::D{d,l,r}=>{let(l,r)=(rec(l)?,rec(r)?);match d{Plus=>l.d_plus(r), Mul=>l.d_mul(r),
                                                    Left=>l.d_left(r), Right=>l.d_right(r)}}
   N::Ym{ym,d,o}=>{rec(o).and_then(|a|ym.apply(d,a))}
