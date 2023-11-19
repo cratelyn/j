@@ -15,6 +15,10 @@
   #[test]fn add_slice_to_rotated_slice()->R<()>{
     let(a@A{m:4,n:1,..})=eval_s("1 2 3 4 + i. 4 1")? else{bail!("bad dims")};eq!(a.into_matrix()?,&[&[1],&[3],&[5],&[7]]);ok!()}
   #[test]fn other_add_slice_to_rotated_slice_is_length_error()->R<()>{is!(eval_s("i. 4 1 + 1 2 3 4").is_err());ok!()}
+} #[cfg(test)]mod increment{use super::*;
+  #[test]fn increment_scalar()->R<()>{let(i)=eval_s(">: 1")?;     eq!(i.as_i()?,       2);               ok!()}
+  #[test]fn increment_slice ()->R<()>{let(i)=eval_s(">: 1 2 3")?; eq!(i.as_slice()?,   &[2,3,4]);        ok!()}
+  #[test]fn increment_matrix()->R<()>{let(i)=eval_s(">: i. 2 2")?;eq!(i.into_matrix()?,&[&[1,2],&[3,4]]);ok!()}
 } #[cfg(test)]mod tally{use super::*;
   macro_rules! t{($f:ident,$i:literal,$o:literal)=>{
     #[test]fn $f()->R<()>{let(a@A{m:1,n:1,..})=eval_s($i)? else{bail!("bad dims")};eq!(a.as_slice()?,&[$o]);ok!()}}}
