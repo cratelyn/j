@@ -138,6 +138,7 @@ use super::*; use std::marker::PhantomData as PD;
   pub fn m_tally(self)->R<A>{let A{m,n,..}=self;let(i)=I::try_from(m*n)?;A::from_i(i)}
   pub fn m_trans(self)->R<A>{let(i@A{m:m_i,n:n_i,..})=self;let(m_o,n_o)=(n_i,m_i);
     let(f)=|i_o,j_o|{i.get(j_o,i_o)};A::new(m_o,n_o)?.init_with(f)}
+  pub fn m_inc(self)->R<A>{let(a@A{m,n,..})=self;A::new(m,n)?.init_with(|i,j|a.get(i,j).map(|x|x+1))}
 }
 
 /**dyadic verbs*/impl D{

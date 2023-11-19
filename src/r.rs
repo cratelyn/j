@@ -32,8 +32,8 @@ mod lex{use crate::*;
     t!(lex_assign,    "a =: 1",       v![sy!("a"),         T::E,             TA(v![1])]                              );
   }
 }/**input parsing*/mod parse{use {crate::*,super::lex::{T,lex}};
-  /**dyadic verb       */ #[derive(DBG,PE,PO)] pub enum D {Plus,Mul,  Left, Right         }
-  /**monadic verb      */ #[derive(DBG,PE,PO)] pub enum M {Idot,Shape,Tally,Transpose,Same}
+  /**dyadic verb       */ #[derive(DBG,PE,PO)] pub enum D {Plus,Mul,  Left, Right             }
+  /**monadic verb      */ #[derive(DBG,PE,PO)] pub enum M {Idot,Shape,Tally,Transpose,Same,Inc}
   /**dyadic adverb     */ #[derive(DBG      )] pub enum Yd{/**dyadic `/` */      Table ,
                                                            /**dyadic `\` */      Infix }
   /**monadic adverb    */ #[derive(DBG      )] pub enum Ym{/**monadic `/`*/      Insert,
@@ -104,7 +104,7 @@ mod lex{use crate::*;
 
   impl M {fn new(s:&str)->O<M> {use M::*; Some(match s{"i."=>Idot  ,"$" =>Shape ,"|:"=>Transpose  ,
                                                        "#" =>Tally ,"[" =>Same  ,"]" =>Same       ,
-                                                                                    _=>r!(None)})}}
+                                                       ">:"=>Inc,                   _=>r!(None)})}}
   impl D {fn new(s:&str)->O<D> {use D::*; Some(match s{"+" =>Plus  ,"*" =>Mul   ,"[" =>Left       ,
                                                        "]" =>Right ,                _=>r!(None)})}}
   impl Ym{fn new(s:&str)->O<Ym>{use Ym::*;Some(match s{"/" =>Insert,"\\"=>Prefix,   _=>r!(None)})}}
