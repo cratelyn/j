@@ -4,7 +4,6 @@ mod lex{use crate::*;
                                                             /*assignment*/   E      ,
   /* NB: this does not identify whether possible verbs  */  /*(ad)verb*/     V(S)   ,
   /* are monadic or dyadic. that is done during parsing.*/  /*symbol*/       SY(SY) }
-  impl T{pub(super) fn is_noun(&self)->bool{use T::*;matches!(self,A(_)|SY(_))}}
   pub(crate) fn lex(input:&str)->R<V<T>>{use std::ops::Deref;
     let(mut ts)=input.split_whitespace().peekable(); let(mut o)=V::with_capacity(ts.size_hint().0);
     while     let Some(t)    =ts.next(){
@@ -89,18 +88,7 @@ mod lex{use crate::*;
       None                  =>{           ym!();}    Some(T::A(v))  =>{let(l)=b!(v.try_into()?);yd!(l);}
       Some(t@T::E|t@T::V(_))=>{ts.push(t);ym!();}    Some(T::SY(sy))=>{let(l)=b!(sy.into());    yd!(l);}
       }
-    bail!("fallthrough: unexpected parsing error");
-  }
-  /**get a tuple, representing a window peeking on the next two elements in this token stream.*/
-  fn lhs_window(ts:&[T])->(O<&T>,O<&T>){match ts{
-      []=>(None,None), [a]=>(None,Some(&a)), [a,b]=>(Some(&a),Some(&b)), [..,a,b]=>(Some(&a),Some(&b)) } }
-  #[cfg(test)]mod lhs_t{use super::*;
-    #[test] fn lhs_window_works_on_empty(){is!(matches!(lhs_window(&[]),               (None,      None)))         }
-    #[test] fn lhs_window_works_on_one  (){is!(matches!(lhs_window(&[T::E]),           (None,      Some(_))))      }
-    #[test] fn lhs_window_works_on_two  (){is!(matches!(lhs_window(&[T::E,T::A(v![])]),(Some(T::E),Some(T::A(_)))))}
-    #[test] fn lhs_window_works_on_three(){
-      is!(matches!(lhs_window(&[T::E,T::A(v![]),T::V(S::from("+"))]),(Some(T::A(_)),Some(_))))}
-  }
+    bail!("fallthrough: unexpected parsing error");}
 
   impl M {fn new(s:&str)->O<M> {use M::*; Some(match s{"i."=>Idot  ,"$" =>Shape ,"|:"=>Transpose  ,
                                                        "#" =>Tally ,"[" =>Same  ,"]" =>Same       ,

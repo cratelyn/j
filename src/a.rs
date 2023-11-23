@@ -27,17 +27,17 @@ use super::*; use std::marker::PhantomData as PD;
   #[macro_export] macro_rules! toob{($f:ident,$a:ident,$i:literal,$j:literal)=>
     {#[test] fn $f()->R<()>{is!($a()?.index($i,$j).is_err());ok!()}}}
   // === 1x1 array indexing ===
-  fn sca()->R<A>{let Ok(a@A{m:1,n:1,..})=A::from_i(42)else{bail!("bad dims")};Ok(a)}
+  #[cfg(test)] fn sca()->R<A>{let Ok(a@A{m:1,n:1,..})=A::from_i(42)else{bail!("bad dims")};Ok(a)}
   toob!(i00_for_scalar,sca,0,0);toob!(i10_for_scalar,sca,1,0);toob!(i01_for_scalar,sca,0,1);
   toob!(i21_for_scalar,sca,2,1);toob!(i12_for_scalar,sca,1,2);toob!(i22_for_scalar,sca,2,2);
   ti!(i11_for_scalar,sca,1,1,0);
   // === 2x3 array indexing ===
-  fn arr2x3()->R<A>{let Ok(a@A{m:2,n:3,..})=A::zeroed(2,3)else{bail!("bad dims")};Ok(a)}
+  #[cfg(test)] fn arr2x3()->R<A>{let Ok(a@A{m:2,n:3,..})=A::zeroed(2,3)else{bail!("bad dims")};Ok(a)}
   toob!(i00_for_2x3,arr2x3,0,0);toob!(i01_for_2x3,arr2x3,0,1);toob!(i10_for_2x3,arr2x3,1,0);
   ti!(i11_for_2x3,arr2x3,1,1,0);ti!(i12_for_2x3,arr2x3,1,2,1);ti!(i13_for_2x3,arr2x3,1,3,2);
   ti!(i21_for_2x3,arr2x3,2,1,3);ti!(i22_for_2x3,arr2x3,2,2,4);ti!(i23_for_2x3,arr2x3,2,3,5);
   // === 3x3 array indexing ===
-  fn arr3x3()->R<A>{let Ok(a@A{m:3,n:3,..})=A::zeroed(3,3)else{bail!("bad dims")};Ok(a)}
+  #[cfg(test)] fn arr3x3()->R<A>{let Ok(a@A{m:3,n:3,..})=A::zeroed(3,3)else{bail!("bad dims")};Ok(a)}
   toob!(i00_for_3x3,arr3x3,0,0);toob!(i01_for_3x3,arr3x3,0,1);toob!(i14_for_3x3,arr3x3,1,4);
   toob!(i41_for_3x3,arr3x3,4,1);toob!(i44_for_3x3,arr3x3,4,4);
   ti!(i11_for_3x3,arr3x3,1,1,0);ti!(i21_for_3x3,arr3x3,2,1,3);ti!(i22_for_3x3,arr3x3,2,2,4);
