@@ -4,7 +4,7 @@ mod lex{use crate::*;
                                                             /*assignment*/   E      ,
   /* NB: this does not identify whether possible verbs  */  /*(ad)verb*/     V(S)   ,
   /* are monadic or dyadic. that is done during parsing.*/  /*symbol*/       SY(SY) }
-  pub(crate) fn lex(input:&str)->R<V<T>>{use std::ops::Deref;
+  pub(crate) fn lex(input:&str)->R<V<T>>{
     let(mut ts)=input.split_whitespace().peekable(); let(mut o)=V::with_capacity(ts.size_hint().0);
     while     let Some(t)    =ts.next(){
            if t == "=:"                                {o.push(T::E)}         // assignment
@@ -15,7 +15,7 @@ mod lex{use crate::*;
               while let Some(i)=peek!(){put!(i);} o.push(T::A(v));}
       else {o.push(T::V(S::from(t)))}                                         // otherwise, a verb or adverb
     } r!(Ok(o)) }
-  #[cfg(test)]mod t{use super::{*,T::A as TA,T::V as TV,T::SY as TSY};
+  #[cfg(test)]mod t{use super::{*,T::A as TA,T::V as TV};
     /// test helper: lex an expression and check the output
     macro_rules! t{($f:ident,$i:literal,$o:expr)=>{#[test]fn $f()->R<()>{eq!(lex($i)?,$o);ok!()}}}
     macro_rules! sy{($i:literal)=>{$i.parse().map(T::SY).unwrap()}}
@@ -30,7 +30,7 @@ mod lex{use crate::*;
     t!(lex_symbol,    "abc",          v![sy!("abc")]                                                                 );
     t!(lex_assign,    "a =: 1",       v![sy!("a"),         T::E,             TA(v![1])]                              );
   }
-}/**input parsing*/mod parse{use {crate::*,super::lex::{T,lex}};
+}/**input parsing*/mod parse{use {crate::*,super::lex::T};
   /**dyadic verb       */ #[derive(DBG,PE,PO)] pub enum D {Plus,Mul,  Left, Right             }
   /**monadic verb      */ #[derive(DBG,PE,PO)] pub enum M {Idot,Shape,Tally,Transpose,Same,Inc}
   /**dyadic adverb     */ #[derive(DBG      )] pub enum Yd{/**dyadic `/` */      Table ,
