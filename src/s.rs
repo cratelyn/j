@@ -9,12 +9,12 @@ use super::*; use std::ops::Not;
     let(sv)=|c:&char|c.is_ascii_lowercase()||c.is_ascii_digit()||*c=='_'; // validate
     if(sc.iter().all(sv).not()){bail!("symbols may only contain a-z, 0-9, or `_`")}
     Ok(SY(s.to_owned()))}}
-  #[test] fn simple_symbol_succeeds()         {assert!(SY::from_str("abc")    .is_ok())}
-  #[test] fn underscore_symbol_succeeds()     {assert!(SY::from_str("abc_def").is_ok())}
-  #[test] fn trailing_number_symbol_succeeds(){assert!(SY::from_str("a1")     .is_ok())}
-  #[test] fn empty_symbol_fails()             {assert!(SY::from_str("")       .is_err())}
-  #[test] fn number_symbol_fails()            {assert!(SY::from_str("1")      .is_err())}
-  #[test] fn leading_number_symbol_fails()    {assert!(SY::from_str("1a")     .is_err())}
+  #[test] fn simple_symbol_succeeds()         {is!(SY::from_str("abc")    .is_ok())}
+  #[test] fn underscore_symbol_succeeds()     {is!(SY::from_str("abc_def").is_ok())}
+  #[test] fn trailing_number_symbol_succeeds(){is!(SY::from_str("a1")     .is_ok())}
+  #[test] fn empty_symbol_fails()             {is!(SY::from_str("")       .is_err())}
+  #[test] fn number_symbol_fails()            {is!(SY::from_str("1")      .is_err())}
+  #[test] fn leading_number_symbol_fails()    {is!(SY::from_str("1a")     .is_err())}
 }
 
 impl ST{
