@@ -54,17 +54,15 @@ use super::*; use std::marker::PhantomData as PD;
     // TODO: use `set_unchecked` here.
     pub fn init_with<F:FnMut(U,U)->R<I>>(mut self,mut f:F)->R<A<MI>>{let(A{m,n,..})=self;
       for(i)in(1..=m){for(j)in(1..=n){let(v)=f(i,j)?;self.set(i,j,v)?;}}Ok(unsafe{self.finish()})}
-    pub unsafe fn finish(self)->A<MI>{std::mem::transmute(self)}
-  }
+    pub unsafe fn finish(self)->A<MI>{std::mem::transmute(self)}}
   impl A<MI>{
     pub fn zeroed(m:U,n:U)->R<Self>{let(l,d)=Self::allocz(m,n)?;Ok(A{m,n,d,l,i:PD})}
     pub fn from_i(i:I)->R<Self>{let mut a=A::new(1,1)?;a.set(1,1,i)?;Ok(unsafe{a.finish()})}}
   impl TF<I> for A<MI>{type Error=E;fn try_from(i:I)->R<Self>{A::from_i(i)}}
   impl<X:MX> A<X>{
-    fn alloc(m:U,n:U)->R<(L,*mut u8)>{let(l)=Self::l(m,n)?;let d=unsafe{alloc(l)};Ok((l,d))}
+    fn alloc (m:U,n:U)->R<(L,*mut u8)>{let(l)=Self::l(m,n)?;let d=unsafe{alloc(l)};       Ok((l,d))}
     fn allocz(m:U,n:U)->R<(L,*mut u8)>{let(l)=Self::l(m,n)?;let d=unsafe{alloc_zeroed(l)};Ok((l,d))}
-    fn l(m:U,n:U)->R<L>{L::array::<I>(m*n).map_err(E::from)}
-  }
+    fn l(m:U,n:U)->R<L>{L::array::<I>(m*n).map_err(E::from)}}
   impl<M> Drop for A<M>{fn drop(&mut self){let(A{d,l,..})=self;unsafe{dealloc(*d,*l)}}}
   // TODO: add compile_fail checks to ensure that e.g. `get` cannot be used on an uninitialized array
 } pub use self::alloc::{MI,MU,MX};
