@@ -98,8 +98,10 @@ mod lex{use crate::*;
   impl Ym{fn new(s:&str)->O<Ym>{use Ym::*;Some(match s{"/" =>Insert,"\\"=>Prefix,   _=>r!(None)})}}
   impl Yd{fn new(s:&str)->O<Yd>{use Yd::*;Some(match s{"/" =>Table ,"\\"=>Infix ,   _=>r!(None)})}}
   #[cfg(test)]mod t{use super::*;
-    macro_rules! t{($f:ident,$i:literal)=>{#[test]fn $f()->R<()>{let(mut ts)=lex($i)?;let ast=parse(&mut ts)?;ok!()}}}
-    macro_rules! tf{($f:ident,$i:literal)=>{#[test] #[should_panic]fn $f(){let(mut ts)=lex($i).unwrap();let ast=parse(&mut ts).unwrap();}}}
+    macro_rules! t {($f:ident,$i:literal)=>{
+      #[test]                fn $f()->R<()>{let(mut ts)=lex($i)?;        let _=parse(&mut ts)?;ok!()}}}
+    macro_rules! tf{($f:ident,$i:literal)=>{
+      #[test] #[should_panic]fn $f()       {let(mut ts)=lex($i).unwrap();let _=parse(&mut ts).unwrap();}}}
     /*parsing unit tests; t!(..) asserts a success, while tf asserts a failure.*/
     t!(parse_1x1,"1");                                       t!(parse_1x3,"1 2 3");
     t!(parse_tally_1,"# 1");                                 t!(parse_tally_1x3,"# 1 2 3");
