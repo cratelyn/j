@@ -15,9 +15,9 @@ use super::*; use std::marker::PhantomData as PD;
     fn oob(&self,i:U,j:U)->R<()>{let A{m,n,..}=*self;
       if(i==0||j==0||i>m||j>n){bail!("({i},{j}) is out-of-bounds of ({m},{n})")}ok!()}
     /// returns the scalar `A_ij` within this array. returns an error if position is out-of-bounds.
-    pub fn index(&self,i:U,j:U)->R<U>   {self.oob(i,j)?;let A{m,n,..}=*self;let(i,j)=(i-1,j-1);Ok((i*n)+j)}
+    pub fn index(&self,i:U,j:U)->R<U>   {self.oob(i,j)?;let(i,j)=(i-1,j-1);Ok((i*self.n)+j)}
     /// returns the scalar `A_ij` within this array. does not check if the position is in bounds.
-    pub fn index_uc(&self,i:U,j:U)->R<U>{               let A{m,n,..}=*self;let(i,j)=(i-1,j-1);Ok((i*n)+j)}
+    pub fn index_uc(&self,i:U,j:U)->R<U>{               let(i,j)=(i-1,j-1);Ok((i*self.n)+j)}
   }
   // === test helpers ===
   /// `A::index` test case generator. check that indexing at a position returns the expected value.
@@ -27,17 +27,17 @@ use super::*; use std::marker::PhantomData as PD;
   #[macro_export] macro_rules! toob{($f:ident,$a:ident,$i:literal,$j:literal)=>
     {#[test] fn $f()->R<()>{is!($a()?.index($i,$j).is_err());ok!()}}}
   // === 1x1 array indexing ===
-  fn sca()->R<A>{let Ok(a@A{m:1,n:1,..})=A::from_i(42)else{bail!("bad dims")};Ok(a)}
+  #[cfg(test)] fn sca()->R<A>{let Ok(a@A{m:1,n:1,..})=A::from_i(42)else{bail!("bad dims")};Ok(a)}
   toob!(i00_for_scalar,sca,0,0);toob!(i10_for_scalar,sca,1,0);toob!(i01_for_scalar,sca,0,1);
   toob!(i21_for_scalar,sca,2,1);toob!(i12_for_scalar,sca,1,2);toob!(i22_for_scalar,sca,2,2);
   ti!(i11_for_scalar,sca,1,1,0);
   // === 2x3 array indexing ===
-  fn arr2x3()->R<A>{let Ok(a@A{m:2,n:3,..})=A::zeroed(2,3)else{bail!("bad dims")};Ok(a)}
+  #[cfg(test)] fn arr2x3()->R<A>{let Ok(a@A{m:2,n:3,..})=A::zeroed(2,3)else{bail!("bad dims")};Ok(a)}
   toob!(i00_for_2x3,arr2x3,0,0);toob!(i01_for_2x3,arr2x3,0,1);toob!(i10_for_2x3,arr2x3,1,0);
   ti!(i11_for_2x3,arr2x3,1,1,0);ti!(i12_for_2x3,arr2x3,1,2,1);ti!(i13_for_2x3,arr2x3,1,3,2);
   ti!(i21_for_2x3,arr2x3,2,1,3);ti!(i22_for_2x3,arr2x3,2,2,4);ti!(i23_for_2x3,arr2x3,2,3,5);
   // === 3x3 array indexing ===
-  fn arr3x3()->R<A>{let Ok(a@A{m:3,n:3,..})=A::zeroed(3,3)else{bail!("bad dims")};Ok(a)}
+  #[cfg(test)] fn arr3x3()->R<A>{let Ok(a@A{m:3,n:3,..})=A::zeroed(3,3)else{bail!("bad dims")};Ok(a)}
   toob!(i00_for_3x3,arr3x3,0,0);toob!(i01_for_3x3,arr3x3,0,1);toob!(i14_for_3x3,arr3x3,1,4);
   toob!(i41_for_3x3,arr3x3,4,1);toob!(i44_for_3x3,arr3x3,4,4);
   ti!(i11_for_3x3,arr3x3,1,1,0);ti!(i21_for_3x3,arr3x3,2,1,3);ti!(i22_for_3x3,arr3x3,2,2,4);
@@ -111,8 +111,7 @@ use super::*; use std::marker::PhantomData as PD;
   impl A<MI>{ // only allow matrix access for initialized arrays
     pub fn into_matrix(&self)->R<Vec<&[I]>>{let(A{m,n,..})=*self;
       (0..m).map(|m|{self.ptr_at(m+1,1)}).map(|r|r.map(|d|unsafe{from_raw_parts(d as *mut I, n as U)})).collect()}}
-  impl TF<&[&[I]]> for A{type Error=E;fn try_from(s:&[&[I]])->R<A>{todo!("TF<&[I]> for A")}}
-  impl PE<&[&[I]]> for A{fn eq(&self,r:&&[&[I]])->bool{let(A{m,n,..})=self;
+  impl PE<&[&[I]]> for A{fn eq(&self,r:&&[&[I]])->bool{
     if(r.len()!=self.m){r!(false)}for(i,r_i)in(r.into_iter().enumerate()){
       if(r_i.len()!=self.n){r!(false)}for(j,r_ij)in(r_i.into_iter().enumerate()){
         let(i,j)=(i+1,j+1);let(a_ij)=match(self.get(i,j)){Ok(v)=>v,Err(_)=>r!(false)};
@@ -121,7 +120,7 @@ use super::*; use std::marker::PhantomData as PD;
 /**monadic verbs*/impl A{
   pub fn m_same(self)->R<A>{Ok(self)}
   pub fn m_idot(self)->R<A>{let(a@A{m,n,..})=self;let gi=|i,j|a.get(i,j)?.try_into().map_err(E::from);
-    if let(1,1)=(m,n){let(m,n)=(1,gi(1,1)?);let(mut o)=A::new(1,n)?;
+    if let(1,1)=(m,n){let(n)=(gi(1,1)?);let(mut o)=A::new(1,n)?;
       for(j)in(1..=n){o.set(1,j,(j-1).try_into()?)?;}Ok(unsafe{o.finish()})}
     else if let(1,2)=(m,n){let(m,n)=(gi(1,1)?,gi(1,2)?);
       let(mut v)=0_u32;let(f)=move |_,_|{let(v_o)=v;v+=1;Ok(v_o)};A::new(m,n)?.init_with(f)}
@@ -136,9 +135,9 @@ use super::*; use std::marker::PhantomData as PD;
   /*return dyad function**/ pub fn f(&self)->fn(I,I)->I{use D::*;
     match(self){Plus=>D::add, Mul=>D::mul, Left=>D::left, Right=>D::right} }
   /*add two numbers*/fn add (x:I,y:I)->I{x+y} /*multiply two numbers*/fn mul  (x:I,y:I)->I{x*y}
-  /*left           */fn left(x:I,y:I)->I{x  } /*right               */fn right(x:I,y:I)->I{  y}
+  /*left           */fn left(x:I,_:I)->I{x  } /*right               */fn right(_:I,y:I)->I{  y}
 } impl A{
-  pub fn d_left (self,r:A)->R<A>{Ok(self)                }
+  pub fn d_left (self,_:A)->R<A>{Ok(self)                }
   pub fn d_right(self,r:A)->R<A>{Ok(r)                   }
   pub fn d_plus(self,r:A) ->R<A>{A::d_do(self,r,D::add)}
   pub fn d_mul (self,r:A) ->R<A>{A::d_do(self,r,D::mul)}
@@ -171,7 +170,7 @@ use super::*; use std::marker::PhantomData as PD;
   // === monadic `/`, `Ym::Insert` tests
   macro_rules! test_insert{($f:ident,$d:expr,$a:expr,$o:expr)=>
     {#[test]fn $f()->R<()>{let(a):R<A>={$a};let(d):D={$d}; // typecheck macro arguments.
-                           let i:I=a.and_then(|a:A|Ym::insert($d,a)).and_then(|a|a.as_i())?;
+                           let i:I=a.and_then(|a:A|Ym::insert(d,a)).and_then(|a|a.as_i())?;
                            eq!(i,$o);ok!()}}}
   test_insert!(add_a_scalar,   D::Plus, A::from_i(42),                           42          );
   test_insert!(add_a_sequence, D::Plus, <A as TF<&[I]>>::try_from(&[1,2,3,4,5]), (1+2+3+4+5) );
@@ -188,15 +187,14 @@ use super::*; use std::marker::PhantomData as PD;
                                           let f=|i,j|->R<I>{let(x,y)=(l[i-1],r[j-1]);Ok(d(x,y))};
                                           A::new(m,n)?.init_with(f)}
       else {bail!("unexpected fallthrough in Yd::table")}}
-    fn infix(d:D,l:A,r:A)->R<A>{let(s)=r.as_slice().map_err(|_|err!("infix rhs must be a slice"))?;
+    fn infix(_:D,l:A,r:A)->R<A>{let(s)=r.as_slice().map_err(|_|err!("infix rhs must be a slice"))?;
                                 let(il)=l.as_i()   .map_err(|_|err!("infix lhs must be a scalar"))?.try_into()?;
                                 let(ic)=(s.len()-il)+1;
       A::new(ic,il)?.init_with(|i,j|Ok(s[(i-1)+(j-1)]))}}}
 
-/**deep-copy*/impl A<MI>{
-  pub fn deep_copy(&self)->R<A>{let A{m,n,l:li,d:di,i:_}=*self;A::new(m,n)?.init_with(|i,j|{self.get(i,j)})}}
+/**deep-copy*/impl A<MI>{pub fn deep_copy(&self)->R<A>{A::new(self.m,self.n)?.init_with(|i,j|{self.get(i,j)})}}
 
 /**display*/mod fmt{use super::*;
   impl DS for A<MI>{
-    fn fmt(&self,fmt:&mut FMT)->FR{let A{m,n,..}=*self;for(i,j)in(self.iter())
+    fn fmt(&self,fmt:&mut FMT)->FR{let A{n,..}=*self;for(i,j)in(self.iter())
       {let(x)=self.get_uc(i,j).map_err(|_|std::fmt::Error)?;write!(fmt,"{x}{}",if(j==n){'\n'}else{' '})?;}ok!()}}}

@@ -1,7 +1,6 @@
-#![allow(dead_code,unused_variables,unreachable_code,unused_imports,unused_parens)]
-/**prelude*/mod p;use p::*;#[cfg(test)]use p::tp::*;
-/**array*/mod a; /**read input*/mod r; /**symbol table*/mod s;
-pub use self::{a::*,r::*,s::*};
+#![allow(unused_parens)] /**prelude*/mod p;use p::*; /*test prelude*/#[cfg(test)]use p::tp::*;
+ /**symbol table*/mod s; /**array*/  mod a;          /**lex/parse input*/mod r;use r::*;
+pub use self::{a::*,s::*};
 pub fn eval(input:&str,st:&mut ST)->R<O<A>>{
   let(mut ts)=lex(input)?;let(ast)=match(parse(&mut ts)?){Some(x)=>x,None=>rrn!()};eval_(ast,st)}
 fn eval_(ast:B<N>,st:&mut ST)->R<O<A>>{use{M::*,D::*};

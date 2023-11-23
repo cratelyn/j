@@ -1,4 +1,4 @@
-//! prelude; shorthand aliases for common types and traits, macros for common patterns.
+#![allow(unused_imports)] //! prelude; shorthand aliases for common types and traits, macros for common patterns.
 pub(crate)use{Box as B,char as C,u32 as I,usize as U,Option as O,String as S,TryFrom as TF,TryInto as TI,Vec as V};
 pub(crate)use{std::{alloc::Layout as L,clone::Clone as CL,cmp::{PartialEq as PE,PartialOrd as PO},
   collections::{BTreeMap as BM,VecDeque as VD},fmt::{Debug as DBG,Display as DS,Formatter as FMT,Result as FR},

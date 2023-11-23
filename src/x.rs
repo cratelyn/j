@@ -1,6 +1,9 @@
-//! a J interpreter fragment, implemented in Rust.
-#![allow(dead_code,unused_variables,unreachable_code,unused_imports,unused_parens)]
-mod p; use{p::*,j::*}; fn main()->R<()>{use std::io::Write;let(mut st)=ST::default();
-  let(pr)=||{print!("  ");std::io::stdout().flush()};
-  let(rl)=||{let(mut l)=S::new();stdin().read_line(&mut l)?;Ok::<_,E>(l)};let(mut ev)=|l:S|eval(&l,&mut st);
-  loop{pr()?;let(o)=rl().and_then(|l|ev(l))?;if let Some(o)=o{println!("{}",o)}}ur!();}
+/**a J interpreter fragment, implemented in Rust.*/
+mod p;use{p::*,j::*,std::io::Write};
+/// main interpreter entrypoint and event-loop.
+fn main()->R<()>{let mut st=ST::default();                                 // define symbol table
+  let prompt  =|   |{print!("  ");std::io::stdout().flush()?;ok!()};       // (callback) print whitespace
+  let read    =|_  |{let mut l=S::new();stdin().read_line(&mut l)?;Ok(l)}; // (callback) read input
+  let mut eval=|s:S|{eval(&s,&mut st)};                                    // (callback) read and evaluate once
+  let print   =|a:A|{println!("{a}")};                                     // (callback) print array
+  loop{prompt().and_then(read).and_then(&mut eval)?.map(print);};          /* !!! main event loop !!! */ }
