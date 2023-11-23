@@ -15,6 +15,6 @@ fn eval_(ast:B<N>,st:&mut ST)->R<O<A>>{use{M::*,D::*};
                                                    Left=>l.d_left(r), Right=>l.d_right(r)}}
   N::Ym{ym,d,o}=>{rec(o).and_then(|a|ym.apply(d,a))}
   N::Yd{yd,d,l,r}=>{let(l,r)=(rec(l)?,rec(r)?);yd.apply(d,l,r)}
-  N::S{sy}   =>{st.get(&sy).ok_or(err!("undefined symbol: {sy:?}"))?;todo!("symbol value clone")}
+  N::S{sy}   =>{st.get(&sy).ok_or(err!("undefined symbol: {sy:?}")).and_then(A::deep_copy)}
   N::E{sy,e} =>{let(a)=rec(e)?;st.insert(sy,a);r!(Ok(None))}
 }.map(O::Some)}
