@@ -62,12 +62,18 @@
     let(a)=eval_s("1 2 3 4 [ i. 4 1")?;eq!(a.as_slice()?,&[1,2,3,4]);ok!()}
 } #[cfg(test)]mod symbol_assignment{use super::*;
   #[test]fn assign_and_get_i()->R<()>{let(mut st)=ST::default();let(a)=eval("a =: 3",&mut st)?;
-    assert_eq!(st.get_s("a").unwrap().as_i().unwrap(),3);ok!()}
+    eq!(st.get_s("a").unwrap().as_i().unwrap(),3);ok!()}
   #[test]fn assign_and_get_slice()->R<()>{let(mut st)=ST::default();let(a)=eval("a =: 3 2 1",&mut st)?;
-    assert_eq!(st.get_s("a").unwrap().as_slice().unwrap(),&[3,2,1]);ok!()}
+    eq!(st.get_s("a").unwrap().as_slice().unwrap(),&[3,2,1]);ok!()}
   #[test]fn assign_and_get_expr()->R<()>{let(mut st)=ST::default();let(a)=eval("a =: 1 3 + 2 4",&mut st)?;
-    assert_eq!(st.get_s("a").unwrap().as_slice().unwrap(),&[3,7]);ok!()}
-  // TODO: tests exercising use of variables
+    eq!(st.get_s("a").unwrap().as_slice().unwrap(),&[3,7]);ok!()}
+  #[test]fn assign_and_eval_slice()->R<()>{let(mut st)=ST::default();let(eval_)=|s|eval(s,&mut st);
+    let(mut i)=["a =: 3 2 1","a"].into_iter().map(eval_);  is!(i.next().unwrap()?.is_none());
+    eq!(i.next().unwrap()?.unwrap().as_slice()?,&[3,2,1]); ok!()}
+  #[test]fn assign_and_eval_expr()->R<()>{let(mut st)=ST::default();let(eval_)=|s|eval(s,&mut st);
+    let(mut i)=["a =: >: i. 5","i =: 3","i ] \\ a"].into_iter().map(eval_);
+    is!(i.next().unwrap()?.is_none()); is!(i.next().unwrap()?.is_none());
+    eq!(i.next().unwrap()?.unwrap().into_matrix()?,&[&[1,2,3],&[2,3,4],&[3,4,5]]); ok!()}
 } #[cfg(test)]mod misc{use super::*;
   #[test]fn empty_statement_evaluates_to_none()->R<()>{is!(eval("",&mut ST::default())?.is_none());ok!()}
   #[test]fn slice_times_transposed_idot_2_3()->R<()>{
