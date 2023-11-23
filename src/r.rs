@@ -54,7 +54,6 @@ mod lex{use crate::*;
   fn parse_(ts:&mut V<T>,ctx:&mut V<B<N>>)->R<()>{
     // push a new AST node onto the `ctx` stack and return, indicating a successful parsing "step."
     macro_rules! step{($n:expr)=>{ctx.push(b!($n));r!(ok!());}}
-
     let(v):S=match ts.pop(){
       Some(T::V(v))  =>v, /*take the next verb, or return if done*/ None=>r!(ok!()),
       Some(T::A(v))  =>{let(n)=v.try_into()?;step!(n);}   // array literal
@@ -70,7 +69,6 @@ mod lex{use crate::*;
     /*first, process monadic and dyadic verbs*/
          if let Some(l)=lhs{let(d)=D::new(&v).ok_or(err!("invalid dyad {v:?}"))?;step!(N::D{l,r:rhs,d});}
     else if let Some(m)=M::new(&v){step!(N::M{m,o:rhs});}
-
     /*otherwise, we should treat this as an adverb*/
     let(y)=v;let(d)=ts.pop().ok_or(err!("adverbs need a verb to apply"))?;
     macro_rules! ym {()=>{
@@ -87,9 +85,7 @@ mod lex{use crate::*;
       /*monadic adverb*/                             /*dyadic adverb */
       None                  =>{           ym!();}    Some(T::A(v))  =>{let(l)=b!(v.try_into()?);yd!(l);}
       Some(t@T::E|t@T::V(_))=>{ts.push(t);ym!();}    Some(T::SY(sy))=>{let(l)=b!(sy.into());    yd!(l);}
-      }
-    bail!("fallthrough: unexpected parsing error");}
-
+      }}
   impl M {fn new(s:&str)->O<M> {use M::*; Some(match s{"i."=>Idot  ,"$" =>Shape ,"|:"=>Transpose  ,
                                                        "#" =>Tally ,"[" =>Same  ,"]" =>Same       ,
                                                        ">:"=>Inc,                   _=>r!(None)})}}

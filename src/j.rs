@@ -1,4 +1,4 @@
-#![allow(unreachable_code,unused_imports,unused_parens)]
+#![allow(unused_imports,unused_parens)]
 /**prelude*/mod p;use p::*;#[cfg(test)]use p::tp::*;
 /**array*/mod a; /**read input*/mod r; /**symbol table*/mod s;
 pub use self::{a::*,r::*,s::*};
