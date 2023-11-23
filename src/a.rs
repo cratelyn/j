@@ -41,8 +41,7 @@ use super::*; use std::marker::PhantomData as PD;
   toob!(i00_for_3x3,arr3x3,0,0);toob!(i01_for_3x3,arr3x3,0,1);toob!(i14_for_3x3,arr3x3,1,4);
   toob!(i41_for_3x3,arr3x3,4,1);toob!(i44_for_3x3,arr3x3,4,4);
   ti!(i11_for_3x3,arr3x3,1,1,0);ti!(i21_for_3x3,arr3x3,2,1,3);ti!(i22_for_3x3,arr3x3,2,2,4);
-  ti!(i31_for_3x3,arr3x3,3,1,6);ti!(i33_for_3x3,arr3x3,3,3,8);
-}
+  ti!(i31_for_3x3,arr3x3,3,1,6);ti!(i33_for_3x3,arr3x3,3,3,8); }
 
 /**array allocation*/mod alloc{use{super::*,std::alloc::{alloc,alloc_zeroed,dealloc}};
   /**sealed trait, memory markers*/pub trait MX{} impl MX for MU {} impl MX for MI {}
@@ -50,8 +49,6 @@ use super::*; use std::marker::PhantomData as PD;
   /**marker: memory initialized*/  #[derive(CL,DBG)]pub struct MI;
   impl A<MU>{
     pub fn new(m:U,n:U)->R<Self>{Self::alloc(m,n).map(|(l,d)|A{m,n,d,l,i:PD})}
-    // TODO: use `A::iter`
-    // TODO: use `set_unchecked` here.
     pub fn init_with<F:FnMut(U,U)->R<I>>(mut self,mut f:F)->R<A<MI>>{let(A{m,n,..})=self;
       for(i)in(1..=m){for(j)in(1..=n){let(v)=f(i,j)?;self.set(i,j,v)?;}}Ok(unsafe{self.finish()})}
     pub unsafe fn finish(self)->A<MI>{std::mem::transmute(self)}}
@@ -64,7 +61,6 @@ use super::*; use std::marker::PhantomData as PD;
     fn allocz(m:U,n:U)->R<(L,*mut u8)>{let(l)=Self::l(m,n)?;let d=unsafe{alloc_zeroed(l)};Ok((l,d))}
     fn l(m:U,n:U)->R<L>{L::array::<I>(m*n).map_err(E::from)}}
   impl<M> Drop for A<M>{fn drop(&mut self){let(A{d,l,..})=self;unsafe{dealloc(*d,*l)}}}
-  // TODO: add compile_fail checks to ensure that e.g. `get` cannot be used on an uninitialized array
 } pub use self::alloc::{MI,MU,MX};
 
 /**array access*/mod access{use{super::*,std::mem::size_of};
@@ -84,8 +80,7 @@ use super::*; use std::marker::PhantomData as PD;
     pub(crate)fn ptr_at_uc(&self,i:U,j:U)->R<*mut I>{self.ptr_at_impl(i,j,Self::index_uc)}
     fn ptr_at_impl<F:Fn(&Self,U,U)->R<U>>(&self,i:U,j:U,f:F)->R<*mut I>{
       let(o):isize=f(self,i,j).map(|x|x*size_of::<I>())?.try_into()?;let(d)=unsafe{(self.d.offset(o) as *mut I)};
-      Ok(d)}
-  }}
+      Ok(d)}}}
 
 /**scalar conversion/comparison*/mod scalars{use super::*; /*todo...*/
   impl A<MI>{pub fn as_i(&self)->R<I>{let a@A{m:1,n:1,..}=self else{bail!("not a scalar")};a.get(1,1)}}
@@ -121,8 +116,7 @@ use super::*; use std::marker::PhantomData as PD;
     if(r.len()!=self.m){r!(false)}for(i,r_i)in(r.into_iter().enumerate()){
       if(r_i.len()!=self.n){r!(false)}for(j,r_ij)in(r_i.into_iter().enumerate()){
         let(i,j)=(i+1,j+1);let(a_ij)=match(self.get(i,j)){Ok(v)=>v,Err(_)=>r!(false)};
-        if(a_ij)!=(*r_ij){r!(false)}}}true}}
-}
+        if(a_ij)!=(*r_ij){r!(false)}}}true}}}
 
 /**monadic verbs*/impl A{
   pub fn m_same(self)->R<A>{Ok(self)}
@@ -136,8 +130,7 @@ use super::*; use std::marker::PhantomData as PD;
   pub fn m_tally(self)->R<A>{let A{m,n,..}=self;let(i)=I::try_from(m*n)?;A::from_i(i)}
   pub fn m_trans(self)->R<A>{let(i@A{m:m_i,n:n_i,..})=self;let(m_o,n_o)=(n_i,m_i);
     let(f)=|i_o,j_o|{i.get(j_o,i_o)};A::new(m_o,n_o)?.init_with(f)}
-  pub fn m_inc(self)->R<A>{let(a@A{m,n,..})=self;A::new(m,n)?.init_with(|i,j|a.get(i,j).map(|x|x+1))}
-}
+  pub fn m_inc(self)->R<A>{let(a@A{m,n,..})=self;A::new(m,n)?.init_with(|i,j|a.get(i,j).map(|x|x+1))}}
 
 /**dyadic verbs*/impl D{
   /*return dyad function**/ pub fn f(&self)->fn(I,I)->I{use D::*;
@@ -161,8 +154,7 @@ use super::*; use std::marker::PhantomData as PD;
     else if (ml==nr)&&(nl==mr) /*NB: inherit the dimensions of the right-hand operand.*/                                // rotation
       {let(f)=|i,j|{let(x)=l.get(j,i)?;let(y)=r.get(i,j)?;Ok(f(x,y))};r!(A::new(mr,nr)?.init_with(f))}
     bail!("length error");
-  }
-}
+  }}
 
 /**monadic adverbs*/mod adverbs_m{use super::*;
   impl Ym{
@@ -175,8 +167,7 @@ use super::*; use std::marker::PhantomData as PD;
       else if let Ok(s)=a.as_slice(){let (m,n)=(s.len(),s.len());
                                      let p=|i,j|if(j>i){Ok(0)}else{a.get(1,j).map(d_)};
                                      A::new(m,n)?.init_with(p)}
-      else { bail!("monadic `\\` is not implemented for matrices") }}
-  }
+      else { bail!("monadic `\\` is not implemented for matrices") }}}
   // === monadic `/`, `Ym::Insert` tests
   macro_rules! test_insert{($f:ident,$d:expr,$a:expr,$o:expr)=>
     {#[test]fn $f()->R<()>{let(a):R<A>={$a};let(d):D={$d}; // typecheck macro arguments.
@@ -184,8 +175,7 @@ use super::*; use std::marker::PhantomData as PD;
                            eq!(i,$o);ok!()}}}
   test_insert!(add_a_scalar,   D::Plus, A::from_i(42),                           42          );
   test_insert!(add_a_sequence, D::Plus, <A as TF<&[I]>>::try_from(&[1,2,3,4,5]), (1+2+3+4+5) );
-  test_insert!(mul_a_sequence, D::Mul , <A as TF<&[I]>>::try_from(&[1,2,3,4,5]), (1*2*3*4*5) );
-}
+  test_insert!(mul_a_sequence, D::Mul , <A as TF<&[I]>>::try_from(&[1,2,3,4,5]), (1*2*3*4*5) ); }
 
 /**dyadic adverbs*/mod adverbs_d{use super::*;
   impl Yd{
@@ -201,17 +191,12 @@ use super::*; use std::marker::PhantomData as PD;
     fn infix(d:D,l:A,r:A)->R<A>{let(s)=r.as_slice().map_err(|_|err!("infix rhs must be a slice"))?;
                                 let(il)=l.as_i()   .map_err(|_|err!("infix lhs must be a scalar"))?.try_into()?;
                                 let(ic)=(s.len()-il)+1;
-      A::new(ic,il)?.init_with(|i,j|Ok(s[(i-1)+(j-1)]))}
-  }
-}
+      A::new(ic,il)?.init_with(|i,j|Ok(s[(i-1)+(j-1)]))}}}
 
 /**deep-copy*/impl A<MI>{
-  pub fn deep_copy(&self)->R<A>{let A{m,n,l:li,d:di,i:_}=*self;A::new(m,n)?.init_with(|i,j|{self.get(i,j)})}
-}
+  pub fn deep_copy(&self)->R<A>{let A{m,n,l:li,d:di,i:_}=*self;A::new(m,n)?.init_with(|i,j|{self.get(i,j)})}}
 
 /**display*/mod fmt{use super::*;
   impl DS for A<MI>{
-    // TODO: buffer stdout, flush after loops
-    // TODO: use `unchecked` to elide bounds checks in printing
     fn fmt(&self,fmt:&mut FMT)->FR{let A{m,n,..}=*self;for(i,j)in(self.iter())
       {let(x)=self.get_uc(i,j).map_err(|_|std::fmt::Error)?;write!(fmt,"{x}{}",if(j==n){'\n'}else{' '})?;}ok!()}}}
