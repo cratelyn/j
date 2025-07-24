@@ -776,7 +776,7 @@ line 4 that shows this simple diagram:
 when implementing new features, _especially_ when interacting with raw memory, i found that it was
 tremendously helpful to open this comment in a split window within my text editor, neovim.
 
-neovim have a `-c` option that may be used to run commands after opening a file. `+n` may be used
+neovim has a `-c` option that may be used to run commands after opening a file. `+n` may be used
 to open a file at a particular line number. thus, nvim `+4 src/a.rs -c split -c res 4` would open
 the core `a.rs` array logic, with a split pane showing me this reference for my memory indexing
 strategy.
